@@ -198,11 +198,14 @@ Lakukan di akun pengguna macOS terpisah supaya dock kerja tetap aman, di macOS 1
 npm run version:set -- 0.2.0
 ```
 
-Commit perubahan versi, lalu buat dan push tag yang sama:
+Commit dan push perubahan versi, lalu jalankan rilis dengan salah satu cara:
 
-```bash
-git tag v0.2.0 && git push origin v0.2.0
-```
+- **Dari GitHub:** buka tab Actions → **Release** → **Run workflow** di branch yang berisi versi baru. Tag `v0.2.0` dibuat otomatis.
+- **Dari terminal:** buat dan push tag yang sama.
+
+  ```bash
+  git tag v0.2.0 && git push origin v0.2.0
+  ```
 
 Workflow `release` membangun `Docky_0.2.0_universal.dmg` di runner macOS dan menerbitkan GitHub Release. App yang sudah terpasang akan menemukan versi itu lewat `https://github.com/donnyridwan/docky/releases/latest/download/latest.json`.
 
