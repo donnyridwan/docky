@@ -1,0 +1,483 @@
+/* Jendela Pengaturan. Belum ada desain Figma; memakai token dan komponen gaya Skala yang sama. */
+
+html,
+body,
+#root {
+  height: 100%;
+  background: var(--panel);
+}
+
+.settings {
+  display: flex;
+  height: 100%;
+}
+
+.sidebar {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  width: 180px;
+  padding: 16px 10px;
+  background: var(--header);
+  border-right: 1px solid var(--outline);
+  flex-shrink: 0;
+}
+
+.brand {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 4px 10px 14px;
+  font-weight: 600;
+}
+
+.sidebar > button {
+  text-align: left;
+  padding: 7px 10px;
+  border-radius: 8px;
+  color: var(--text-muted);
+}
+
+.sidebar > button:hover {
+  background: var(--hover);
+  color: var(--text);
+}
+
+.sidebar > button.active {
+  background: var(--control);
+  color: var(--text);
+}
+
+.content {
+  flex: 1;
+  min-width: 0;
+  overflow: auto;
+}
+
+.pane {
+  padding: 20px 24px;
+  max-width: 640px;
+}
+
+.pane h1 {
+  margin: 0 0 6px;
+  font-size: 18px;
+  font-weight: 600;
+}
+
+.pane > p {
+  margin: 0 0 14px;
+  font-size: 13px;
+  line-height: 1.45;
+}
+
+.grow {
+  flex: 1;
+  min-width: 0;
+}
+
+.small {
+  font-size: 12px;
+}
+
+.error {
+  color: #ff8a8d;
+  font-size: 12px;
+}
+
+.text-input {
+  height: 30px;
+  padding: 0 10px;
+  background: var(--field);
+  border: 1px solid var(--chip-stroke);
+  border-radius: 8px;
+  outline: none;
+  -webkit-user-select: text;
+  user-select: text;
+}
+
+.text-input:focus {
+  border-color: var(--blue);
+}
+
+/* ---- Tab Preset ---------------------------------------------------- */
+
+.presets-tab {
+  display: flex;
+  height: 100%;
+}
+
+.preset-list {
+  display: flex;
+  flex-direction: column;
+  width: 200px;
+  border-right: 1px solid var(--outline);
+  flex-shrink: 0;
+}
+
+.preset-list ul {
+  list-style: none;
+  margin: 0;
+  padding: 12px 8px;
+  flex: 1;
+  overflow: auto;
+}
+
+.preset-list li button {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  width: 100%;
+  padding: 7px 10px;
+  border-radius: 8px;
+  text-align: left;
+}
+
+.preset-list li button:hover {
+  background: var(--hover);
+}
+
+.preset-list li button.active {
+  background: var(--control);
+}
+
+.list-actions {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  padding: 10px 8px 14px;
+  border-top: 1px solid var(--outline);
+}
+
+.list-actions .pill {
+  height: 28px;
+  font-size: 13px;
+  justify-content: center;
+}
+
+.preset-detail {
+  flex: 1;
+  min-width: 0;
+  overflow: auto;
+}
+
+.editor {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  padding: 20px 24px;
+  min-height: 100%;
+}
+
+.row {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.label {
+  width: 52px;
+  color: var(--text-muted);
+  font-size: 13px;
+}
+
+.segmented {
+  display: inline-flex;
+  padding: 2px;
+  background: var(--chip);
+  border: 1px solid var(--chip-stroke);
+  border-radius: var(--radius-pill);
+}
+
+.segmented button {
+  height: 26px;
+  padding: 0 14px;
+  border-radius: var(--radius-pill);
+  font-size: 13px;
+  color: var(--text-muted);
+}
+
+.segmented button[aria-checked="true"] {
+  background: var(--control);
+  color: var(--text);
+}
+
+.hint {
+  margin: -4px 0 4px 64px;
+  font-size: 12px;
+  color: var(--text-muted);
+  line-height: 1.4;
+}
+
+.section-head {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  margin-top: 8px;
+  font-weight: 500;
+}
+
+.app-list {
+  list-style: none;
+  margin: 0;
+  padding: 4px;
+  background: var(--field);
+  border-radius: var(--radius-field);
+}
+
+.app-row {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 6px 8px;
+  border-radius: 6px;
+  border-top: 2px solid transparent;
+  border-bottom: 2px solid transparent;
+}
+
+.app-row:hover {
+  background: var(--hover);
+}
+
+.app-row.dragging {
+  opacity: 0.4;
+}
+
+.app-row.drop-before {
+  border-top-color: var(--blue);
+}
+
+.app-row.drop-after {
+  border-bottom-color: var(--blue);
+}
+
+.app-row.missing .name {
+  color: var(--text-muted);
+}
+
+.grip {
+  color: var(--chip-stroke);
+  font-size: 12px;
+  letter-spacing: -3px;
+  cursor: grab;
+}
+
+.order {
+  width: 16px;
+  text-align: right;
+  font-size: 12px;
+  color: var(--text-muted);
+  font-variant-numeric: tabular-nums;
+}
+
+.name {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.tag {
+  margin-left: 8px;
+  padding: 1px 6px;
+  border-radius: 4px;
+  background: var(--chip);
+  font-size: 11px;
+  color: var(--text-muted);
+}
+
+.toggle {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.remove {
+  width: 22px;
+  height: 22px;
+  border-radius: 11px;
+  font-size: 16px;
+  line-height: 1;
+  color: var(--text-muted);
+}
+
+.remove:hover {
+  background: var(--chip);
+  color: var(--text);
+}
+
+.app-row .sr-only:focus-within {
+  position: static;
+  width: auto;
+  height: auto;
+  clip: auto;
+  display: flex;
+  gap: 4px;
+  font-size: 12px;
+}
+
+.empty {
+  padding: 14px 10px;
+  font-size: 13px;
+}
+
+.add-app {
+  align-self: flex-start;
+  height: 28px;
+  font-size: 13px;
+}
+
+.editor-foot {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-top: auto;
+  padding-top: 14px;
+}
+
+.editor-foot .pill {
+  height: 30px;
+  font-size: 13px;
+}
+
+.empty-state {
+  padding: 40px 24px;
+  text-align: center;
+}
+
+.empty-state p {
+  margin: 4px 0;
+}
+
+/* ---- Pemilih app ---------------------------------------------------- */
+
+.picker-backdrop {
+  position: fixed;
+  inset: 0;
+  z-index: 20;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: rgba(0, 0, 0, 0.45);
+}
+
+.picker {
+  display: flex;
+  flex-direction: column;
+  width: min(460px, 90vw);
+  height: min(440px, 85vh);
+  background: var(--panel);
+  border: 1px solid var(--outline);
+  border-radius: 12px;
+  box-shadow: 0 18px 40px rgba(0, 0, 0, 0.45);
+  overflow: hidden;
+}
+
+.picker-head {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  padding: 12px;
+  background: var(--header);
+  border-bottom: 1px solid var(--outline);
+  font-weight: 500;
+}
+
+.picker-list {
+  list-style: none;
+  margin: 0;
+  padding: 6px;
+  flex: 1;
+  overflow: auto;
+}
+
+.picker-list button {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  width: 100%;
+  padding: 6px 8px;
+  border-radius: 6px;
+  text-align: left;
+}
+
+.picker-list button:hover,
+.picker-list button:focus-visible {
+  background: var(--control);
+  outline: none;
+}
+
+.picker-list .small {
+  max-width: 45%;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.picker-foot {
+  display: flex;
+  justify-content: flex-end;
+  padding: 10px 12px;
+  border-top: 1px solid var(--outline);
+}
+
+.picker-foot .pill {
+  height: 28px;
+  font-size: 13px;
+}
+
+/* ---- Tab Umum ---------------------------------------------------- */
+
+.setting {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 24px;
+  padding: 14px 0;
+  border-bottom: 1px solid #3a3a3a;
+}
+
+.setting p {
+  margin: 4px 0 0;
+  line-height: 1.4;
+}
+
+.setting .pill {
+  height: 30px;
+  font-size: 13px;
+}
+
+.range {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  flex-shrink: 0;
+  font-size: 13px;
+  font-variant-numeric: tabular-nums;
+}
+
+.range input {
+  accent-color: var(--blue);
+  width: 140px;
+}
+
+.inline-actions {
+  display: flex;
+  gap: 8px;
+  flex-shrink: 0;
+}
+
+.notice {
+  margin: 10px 0 0;
+  padding: 8px 12px;
+  background: var(--field);
+  border-radius: 8px;
+  font-size: 13px;
+}
+
+.about {
+  margin-top: 24px;
+}
+
+.about p {
+  margin: 4px 0;
+}

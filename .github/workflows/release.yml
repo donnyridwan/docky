@@ -1,0 +1,41 @@
+name: Release
+
+# Beta 0.x: .dmg belum ditandatangani, dibagikan lewat GitHub Releases.
+# Rilis publik: isi secret APPLE_CERTIFICATE, APPLE_CERTIFICATE_PASSWORD,
+# APPLE_SIGNING_IDENTITY, APPLE_ID, APPLE_PASSWORD, dan APPLE_TEAM_ID, lalu
+# tambahkan semuanya ke blok `env` langkah build di bawah supaya Tauri
+# menandatangani dan menotarisasi app.
+
+on:
+  push:
+    tags: ["v*"]
+
+permissions:
+  contents: write
+
+jobs:
+  release:
+    runs-on: macos-14
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+      - uses: dtolnay/rust-toolchain@stable
+        with:
+          targets: aarch64-apple-darwin,x86_64-apple-darwin
+      - uses: Swatinem/rust-cache@v2
+      - run: npm ci
+      - run: cargo test -p docky-core
+      - uses: tauri-apps/tauri-action@v0
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        with:
+          tagName: ${{ github.ref_name }}
+          releaseName: Docky ${{ github.ref_name }}
+          releaseBody: |
+            Build beta, belum ditandatangani. Cara membukanya ada di README (bagian "Pasang (beta)").
+          releaseDraft: true
+          prerelease: true
+          args: --target universal-apple-darwin

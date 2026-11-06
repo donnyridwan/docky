@@ -1,0 +1,17 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1024" height="1024" viewBox="0 0 1024 1024">
+  <defs>
+    <linearGradient id="bg" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0" stop-color="#3A3A3E"/>
+      <stop offset="1" stop-color="#151517"/>
+    </linearGradient>
+  </defs>
+  <!-- Bidang ikon macOS: 824×824 di tengah kanvas 1024, sudut membulat -->
+  <rect x="100" y="100" width="824" height="824" rx="185" fill="url(#bg)"/>
+  <rect x="100.5" y="100.5" width="823" height="823" rx="184.5" fill="none" stroke="#FFFFFF" stroke-opacity="0.08"/>
+  <!-- Glyph dock dari Figma (Ikon/dock), diperbesar 32× -->
+  <g transform="translate(256 240) scale(32)">
+    <path d="M3.75 9.75H12.25C13.3546 9.75 14.25 10.6454 14.25 11.75V12.25C14.25 13.3546 13.3546 14.25 12.25 14.25H3.75C2.64543 14.25 1.75 13.3546 1.75 12.25V11.75C1.75 10.6454 2.64543 9.75 3.75 9.75Z" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" stroke="#FFFFFF" fill="none"/>
+    <path d="M6.5 4H5C4.44772 4 4 4.44772 4 5V6.5C4 7.05228 4.44772 7.5 5 7.5H6.5C7.05228 7.5 7.5 7.05228 7.5 6.5V5C7.5 4.44772 7.05228 4 6.5 4Z" fill="#FFFFFF"/>
+    <path d="M11 4H9.5C8.94772 4 8.5 4.44772 8.5 5V6.5C8.5 7.05228 8.94772 7.5 9.5 7.5H11C11.5523 7.5 12 7.05228 12 6.5V5C12 4.44772 11.5523 4 11 4Z" fill="#2F6FED"/>
+  </g>
+</svg>

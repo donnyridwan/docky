@@ -1,0 +1,268 @@
+/* Panel mengambang: Variasi B · Panel bawah, gaya Skala (Figma node 32:221). */
+
+html,
+body {
+  background: transparent;
+  overflow: hidden;
+}
+
+.panel {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  width: 720px;
+  /* Sedikit tembus pandang supaya efek blur macOS di belakang jendela terasa. */
+  background: color-mix(in srgb, var(--panel) 94%, transparent);
+  border: 1px solid var(--outline);
+  border-radius: var(--radius-panel);
+  overflow: visible;
+}
+
+.panel-header {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  height: 30px;
+  padding: 0 12px;
+  background: var(--header);
+  border-bottom: 1px solid var(--outline);
+  border-radius: calc(var(--radius-panel) - 1px) calc(var(--radius-panel) - 1px) 0 0;
+  flex-shrink: 0;
+}
+
+.panel-title {
+  font-size: 12px;
+  font-weight: 500;
+  color: var(--text-muted);
+  white-space: nowrap;
+}
+
+.spacer {
+  flex: 1 0 0;
+  min-width: 1px;
+}
+
+.icon-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 4px;
+}
+
+.icon-btn:hover .icon {
+  opacity: 1;
+}
+
+.icon.flipped {
+  transform: scaleX(-1);
+}
+
+.menu-anchor {
+  position: relative;
+  display: flex;
+}
+
+.header-menu {
+  top: 22px;
+  right: -4px;
+}
+
+/* ---- Area isi dock ----------------------------------------------- */
+
+.panel-body {
+  padding: 8px 8px 0;
+}
+
+.field {
+  position: relative;
+  display: flex;
+  align-items: flex-start;
+  gap: 10px;
+  min-height: 64px;
+  padding: 12px 14px 12px 12px;
+  background: var(--field);
+  border-radius: var(--radius-field);
+}
+
+.field.tone-warn {
+  box-shadow: inset 3px 0 0 var(--warning);
+}
+
+.field.tone-error {
+  box-shadow: inset 3px 0 0 var(--danger);
+}
+
+.dock-apps {
+  display: flex;
+  gap: 10px;
+  min-width: 0;
+  overflow-x: auto;
+  scrollbar-width: none;
+}
+
+.dock-apps::-webkit-scrollbar {
+  display: none;
+}
+
+.add-tile {
+  border: 1px dashed var(--chip-stroke);
+  background: transparent;
+}
+
+.add-tile .add-icon {
+  opacity: 0.8;
+}
+
+.add-tile:hover {
+  background: var(--hover);
+}
+
+.mode {
+  position: relative;
+  flex-shrink: 0;
+}
+
+.mode-btn {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 14px;
+  white-space: nowrap;
+  border-radius: 6px;
+}
+
+.mode-btn:hover .icon.dim {
+  opacity: 1;
+}
+
+.mode-menu {
+  top: 24px;
+  right: -6px;
+}
+
+.mode-menu small {
+  display: block;
+  font-size: 11px;
+  color: var(--text-muted);
+  margin-top: 1px;
+}
+
+.mode-menu button:hover small {
+  color: rgba(255, 255, 255, 0.8);
+}
+
+.field-text {
+  flex: 1;
+  min-width: 0;
+  padding-right: 24px;
+}
+
+.field-title {
+  font-size: 14px;
+  font-weight: 500;
+}
+
+.field-text p {
+  margin: 4px 0 0;
+  font-size: 13px;
+  line-height: 1.4;
+  color: var(--text-muted);
+}
+
+.field-text p b {
+  color: var(--text);
+  font-weight: 500;
+}
+
+.field-actions {
+  display: flex;
+  gap: 8px;
+  margin-top: 10px;
+}
+
+.field-actions .pill {
+  height: 28px;
+  font-size: 13px;
+  padding: 0 12px;
+}
+
+.dismiss {
+  position: absolute;
+  top: 12px;
+  right: 12px;
+}
+
+.steps {
+  display: flex;
+  gap: 4px;
+  margin-top: 10px;
+}
+
+.steps span {
+  flex: 1;
+  height: 4px;
+  border-radius: 2px;
+  background: var(--chip-stroke);
+}
+
+.steps span.done {
+  background: var(--blue);
+}
+
+.steps span.current {
+  background: linear-gradient(90deg, var(--blue), var(--chip-stroke));
+  background-size: 200% 100%;
+  animation: progress 1.2s linear infinite;
+}
+
+@keyframes progress {
+  from {
+    background-position: 100% 0;
+  }
+  to {
+    background-position: -100% 0;
+  }
+}
+
+/* ---- Baris bawah --------------------------------------------------- */
+
+.panel-footer {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 8px;
+}
+
+.chips {
+  display: flex;
+  gap: 8px;
+  min-width: 0;
+  overflow-x: auto;
+  scrollbar-width: none;
+}
+
+.chips::-webkit-scrollbar {
+  display: none;
+}
+
+.spinner {
+  width: 14px;
+  height: 14px;
+  border-radius: 50%;
+  border: 2px solid rgba(255, 255, 255, 0.35);
+  border-top-color: #fff;
+  animation: spin 0.8s linear infinite;
+}
+
+@keyframes spin {
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .spinner,
+  .steps span.current {
+    animation: none;
+  }
+}

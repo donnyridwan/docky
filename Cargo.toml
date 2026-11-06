@@ -1,0 +1,19 @@
+[workspace]
+resolver = "2"
+members = ["crates/docky-core", "src-tauri"]
+# Hanya docky-core yang dibangun & dites secara default (bisa di Linux/CI tanpa SDK macOS).
+default-members = ["crates/docky-core"]
+
+[workspace.package]
+version = "0.1.0"
+edition = "2021"
+license = "MIT"
+authors = ["Donny Ridwan"]
+repository = "https://github.com/donnyridwan/docky"
+
+[profile.release]
+codegen-units = 1
+lto = true
+opt-level = "s"
+panic = "abort"
+strip = true
