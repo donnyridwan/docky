@@ -275,15 +275,20 @@ fn position_panel(win: &WebviewWindow) -> tauri::Result<()> {
     win.set_position(PhysicalPosition::new(x, y))
 }
 
+fn show_panel(app: &AppHandle) {
+    let Some(win) = app.get_webview_window(PANEL) else { return };
+    let _ = position_panel(&win);
+    let _ = win.show();
+    let _ = win.set_focus();
+    let _ = app.emit_to(PANEL, "panel-shown", ());
+}
+
 fn toggle_panel(app: &AppHandle) {
     let Some(win) = app.get_webview_window(PANEL) else { return };
     if win.is_visible().unwrap_or(false) {
         let _ = win.hide();
     } else {
-        let _ = position_panel(&win);
-        let _ = win.show();
-        let _ = win.set_focus();
-        let _ = app.emit_to(PANEL, "panel-shown", ());
+        show_panel(app);
     }
 }
 
@@ -335,11 +340,7 @@ fn build_tray(app: &AppHandle) -> tauri::Result<()> {
             "original" => {
                 // Minta konfirmasi di panel sebelum memulihkan.
                 let _ = app.emit_to(PANEL, "confirm-restore-original", ());
-                if let Some(win) = app.get_webview_window(PANEL) {
-                    let _ = position_panel(&win);
-                    let _ = win.show();
-                    let _ = win.set_focus();
-                }
+                show_panel(app);
             }
             "update" => {
                 let busy = app.state::<AppState>().engine.is_busy();
@@ -419,6 +420,14 @@ pub fn run() {
             check_update,
             install_update,
         ])
-        .run(tauri::generate_context!())
-        .expect("Docky gagal dijalankan");
+        .build(tauri::generate_context!())
+        .expect("Docky gagal dijalankan")
+        .run(|_app, _event| {
+            // Docky dibuka lagi (dari Applications, Spotlight, atau Launchpad) saat
+            // masih berjalan di menu bar: tampilkan panelnya, jangan diam saja.
+            #[cfg(target_os = "macos")]
+            if let tauri::RunEvent::Reopen { .. } = _event {
+                show_panel(_app);
+            }
+        });
 }
