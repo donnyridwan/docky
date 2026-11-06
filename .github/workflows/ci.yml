@@ -2,8 +2,8 @@ name: CI
 
 on:
   push:
-    branches: [main]
   pull_request:
+  workflow_dispatch:
 
 jobs:
   core:
@@ -30,12 +30,20 @@ jobs:
       - uses: dtolnay/rust-toolchain@stable
         with:
           components: clippy
+          targets: aarch64-apple-darwin,x86_64-apple-darwin
       - uses: Swatinem/rust-cache@v2
       - run: npm ci
       - run: npm run build
       - run: cargo clippy --workspace -- -D warnings
       - run: cargo test --workspace
-      - name: Bundle .app (tanpa tanda tangan)
-        run: npx tauri build --bundles app --config src-tauri/tauri.no-updater.conf.json
+      - name: Bundle .dmg universal (Apple Silicon + Intel)
+        # Tanpa paket update; .dmg untuk dicoba langsung, bukan rilis.
+        run: npx tauri build --target universal-apple-darwin --bundles app,dmg --config src-tauri/tauri.no-updater.conf.json
       - name: Ukuran app
-        run: du -sh target/release/bundle/macos/Docky.app
+        run: du -sh target/universal-apple-darwin/release/bundle/macos/Docky.app target/universal-apple-darwin/release/bundle/dmg/*.dmg
+      - name: Simpan .dmg sebagai artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: Docky-dmg
+          path: target/universal-apple-darwin/release/bundle/dmg/*.dmg
+          if-no-files-found: error
