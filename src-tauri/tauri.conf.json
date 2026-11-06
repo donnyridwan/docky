@@ -29,7 +29,9 @@
         "focus": true,
         "acceptFirstMouse": true,
         "windowEffects": {
-          "effects": ["hudWindow"],
+          "effects": [
+            "hudWindow"
+          ],
           "state": "active",
           "radius": 16
         }
@@ -41,7 +43,10 @@
   },
   "bundle": {
     "active": true,
-    "targets": ["app", "dmg"],
+    "targets": [
+      "app",
+      "dmg"
+    ],
     "category": "Utility",
     "copyright": "© 2026 Donny Ridwan. Lisensi MIT.",
     "shortDescription": "Rapikan Mac dengan satu klik.",
@@ -55,8 +60,17 @@
     ],
     "macOS": {
       "minimumSystemVersion": "13.0",
-      "signingIdentity": null,
+      "signingIdentity": "-",
       "entitlements": null
+    },
+    "createUpdaterArtifacts": true
+  },
+  "plugins": {
+    "updater": {
+      "pubkey": "dW50cnVzdGVkIGNvbW1lbnQ6IG1pbmlzaWduIHB1YmxpYyBrZXk6IDNCNkU3RDM2M0FENDE0RTkKUldUcEZOUTZObjF1T3c0VlBSalZSWEhHaTF2MmpFNElvYnEydGJHMlVENVdCS3h5UDRBYzZ3WW4K",
+      "endpoints": [
+        "https://github.com/donnyridwan/docky/releases/latest/download/latest.json"
+      ]
     }
   }
 }

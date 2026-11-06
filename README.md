@@ -55,14 +55,24 @@ Di luar lingkup versi pertama: tab browser, desktop lain (Spaces), monitor kedua
 
 ## Pasang (beta)
 
-1. Unduh `Docky_*.dmg` dari [GitHub Releases](https://github.com/donnyridwan/docky/releases), buka, dan seret Docky ke Applications.
-2. Build beta belum ditandatangani, jadi macOS akan menolak membukanya dengan klik dua kali. Buka **System Settings → Privacy & Security**, gulir ke bawah, lalu klik **Open Anyway** untuk Docky. Atau dari Terminal:
+1. Unduh `Docky_*_universal.dmg` dari [GitHub Releases](https://github.com/donnyridwan/docky/releases), buka, dan seret Docky ke Applications. Satu file untuk Mac Apple Silicon dan Intel.
+2. Build beta belum dinotarisasi Apple, jadi macOS akan menolak membukanya dengan klik dua kali. Buka **System Settings → Privacy & Security**, gulir ke bawah, lalu klik **Open Anyway** untuk Docky. Atau dari Terminal:
 
    ```bash
    xattr -dr com.apple.quarantine /Applications/Docky.app
    ```
 
 3. Saat pertama dibuka, Docky menyimpan cadangan dock aslimu sebelum mengubah apa pun.
+
+### Update otomatis
+
+Docky mengecek update saat dibuka dan setiap 6 jam. Kalau ada versi baru, update diunduh di latar belakang dan tanda tangannya diperiksa, lalu:
+
+- muncul notifikasi macOS "Update Docky siap",
+- tombol biru **Restart untuk update →** muncul di header panel, dan
+- item menu ikon menu bar berubah jadi **Restart untuk update ke versi X**.
+
+Update baru dipasang saat tombol itu ditekan, lalu Docky terbuka lagi dengan versi terbaru. Pengecekan manual ada di **Pengaturan → Umum → Periksa update**.
 
 ## Data dan privasi
 
@@ -77,7 +87,7 @@ Semua data ada di `~/Library/Application Support/Docky/`:
 
 App di preset dicatat dengan bundle ID (contoh `com.figma.Desktop`), bukan lokasi file, karena bundle ID tetap sama walaupun app dipindah atau di-update. Setiap penulisan memakai file sementara yang lalu menggantikan file lama, supaya file tidak rusak kalau Mac mati di tengah proses.
 
-Docky tidak mengirim data apa pun ke internet.
+Docky tidak mengirim data ke internet. Satu-satunya koneksi adalah mengunduh `latest.json` dan paket update dari GitHub Releases.
 
 ## Memulihkan dock secara manual
 
@@ -177,10 +187,30 @@ Lakukan di akun pengguna macOS terpisah supaya dock kerja tetap aman, di macOS 1
 
 ## Rilis dan distribusi
 
-1. **Beta 0.x** untuk lingkaran kecil, lewat GitHub Releases. Belum ditandatangani; lihat cara membukanya di atas. Workflow `release` membuat `.dmg` saat tag `v*` di-push.
+1. **Beta 0.x** untuk lingkaran kecil, lewat GitHub Releases. Ditandatangani ad-hoc tapi belum dinotarisasi; lihat cara membukanya di atas.
 2. **Rilis publik**: daftar Apple Developer, lalu tandatangani dan notarisasi app (lihat komentar di `.github/workflows/release.yml`).
-3. **Update otomatis** dengan plugin updater Tauri dan file daftar versi di GitHub.
+3. **Update otomatis** dengan plugin updater Tauri; `latest.json` di GitHub Releases.
 4. **Homebrew**, setelah ada pengguna.
+
+### Membuat rilis baru
+
+```bash
+npm run version:set -- 0.2.0
+```
+
+Commit perubahan versi, lalu buat dan push tag yang sama:
+
+```bash
+git tag v0.2.0 && git push origin v0.2.0
+```
+
+Workflow `release` membangun `Docky_0.2.0_universal.dmg` di runner macOS dan menerbitkan GitHub Release. App yang sudah terpasang akan menemukan versi itu lewat `https://github.com/donnyridwan/docky/releases/latest/download/latest.json`.
+
+Syarat update otomatis:
+
+- **Secret `TAURI_SIGNING_PRIVATE_KEY`** berisi kunci privat updater (pasangan kunci publik di `src-tauri/tauri.conf.json` → `plugins.updater.pubkey`). Tanpa secret ini rilis tetap membuat `.dmg`, tapi tanpa paket update. Kunci privat jangan pernah masuk repo; kalau hilang, buat pasangan baru dengan `npx tauri signer generate` dan ganti `pubkey`. App yang sudah terpasang dengan kunci lama perlu dipasang ulang manual sekali.
+- **Repo harus publik.** App mengunduh `latest.json` tanpa login; dari repo privat GitHub menjawab 404 sehingga update tidak pernah terlihat.
+- Rilis harus terbit (bukan draft atau prerelease), karena `releases/latest` melewati keduanya.
 
 Catatan nama: "Docky" pernah dipakai untuk dock populer di Linux. Perlu dicek sebelum rilis publik.
 

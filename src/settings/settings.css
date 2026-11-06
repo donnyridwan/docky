@@ -23,6 +23,10 @@ body,
   flex-shrink: 0;
 }
 
+.brand img {
+  border-radius: 4px;
+}
+
 .brand {
   display: flex;
   align-items: center;

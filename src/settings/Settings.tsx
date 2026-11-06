@@ -1,8 +1,8 @@
 import { useEffect, useState } from "react";
-import { api, errorMessage, MODE_LABEL, type Preset, type Status } from "../api";
+import { api, errorMessage, MODE_LABEL, type Preset, type Status, type UpdateStatus } from "../api";
 import { AppTile } from "../components/AppTile";
-import { Icon } from "../components/Icon";
-import { useInstalledApps, usePresets, useSettings } from "../hooks";
+import { useInstalledApps, usePresets, useSettings, useUpdateStatus } from "../hooks";
+import appIcon from "../assets/app-icon.png";
 import { AppPicker } from "./AppPicker";
 import { PresetEditor } from "./PresetEditor";
 import "./settings.css";
@@ -23,7 +23,7 @@ export function SettingsWindow() {
     <div className="settings">
       <nav className="sidebar" aria-label="Bagian pengaturan">
         <div className="brand">
-          <Icon name="dock" />
+          <img src={appIcon} width={20} height={20} alt="" />
           <span>Docky</span>
         </div>
         {TABS.map(([id, label]) => (
@@ -213,6 +213,8 @@ function GeneralTab() {
     <div className="pane">
       <h1>Umum</h1>
 
+      <UpdateSetting version={status?.version} />
+
       <div className="setting">
         <div>
           <div>Batas waktu tunggu</div>
@@ -274,9 +276,62 @@ function GeneralTab() {
           {presets.length} preset · {presets.filter((p) => p.mode === "clean").length} {MODE_LABEL.clean.toLowerCase()},{" "}
           {presets.filter((p) => p.mode === "dock_only").length} {MODE_LABEL.dock_only.toLowerCase()}
         </p>
-        <p>Data tersimpan di {status?.data_dir ?? "~/Library/Application Support/Docky"}. Docky tidak mengirim data ke internet.</p>
-        <p>Docky 0.1.0 · Open source, lisensi MIT.</p>
+        <p>
+          Data tersimpan di {status?.data_dir ?? "~/Library/Application Support/Docky"}. Docky hanya terhubung ke internet untuk
+          mengecek update.
+        </p>
+        <p>Docky {status?.version ?? ""} · Open source, lisensi MIT.</p>
       </div>
+    </div>
+  );
+}
+
+function updateText(u: UpdateStatus): string {
+  switch (u.state) {
+    case "checking":
+      return "Mengecek update…";
+    case "up_to_date":
+      return "Docky sudah versi terbaru.";
+    case "downloading":
+      return `Mengunduh Docky ${u.version}${u.percent != null ? ` · ${u.percent}%` : "…"}`;
+    case "ready":
+      return `Docky ${u.version} sudah diunduh dan siap dipasang.`;
+    case "error":
+      return `Update belum bisa dicek: ${u.message}`;
+    default:
+      return "Docky mengecek update otomatis saat dibuka dan setiap 6 jam.";
+  }
+}
+
+function UpdateSetting({ version }: { version?: string }) {
+  const update = useUpdateStatus();
+  const [error, setError] = useState<string | null>(null);
+  const working = update.state === "checking" || update.state === "downloading";
+
+  const install = async () => {
+    setError(null);
+    try {
+      await api.installUpdate();
+    } catch (e) {
+      setError(errorMessage(e));
+    }
+  };
+
+  return (
+    <div className="setting">
+      <div>
+        <div>Update{version ? ` · versi ${version}` : ""}</div>
+        <p className="muted small">{error ?? updateText(update)}</p>
+      </div>
+      {update.state === "ready" ? (
+        <button className="pill primary" onClick={install}>
+          Restart untuk update →
+        </button>
+      ) : (
+        <button className="pill" disabled={working} onClick={() => api.checkUpdate()}>
+          Periksa update
+        </button>
+      )}
     </div>
   );
 }

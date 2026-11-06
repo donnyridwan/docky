@@ -72,9 +72,16 @@ export interface UndoSummary {
 export interface Status {
   busy: boolean;
   can_undo: boolean;
+  version: string;
   has_backup: boolean;
   data_dir: string;
 }
+
+export type UpdateStatus =
+  | { state: "idle" | "checking" | "up_to_date" }
+  | { state: "downloading"; version: string; percent: number | null }
+  | { state: "ready"; version: string; notes: string | null }
+  | { state: "error"; message: string };
 
 export const MODE_LABEL: Record<PresetMode, string> = {
   clean: "Bersih total",
@@ -127,6 +134,9 @@ export const api = {
   hidePanel: () => call<void>("hide_panel"),
   openSettings: () => call<void>("open_settings"),
   quit: () => call<void>("quit_app"),
+  updateStatus: () => call<UpdateStatus>("update_status"),
+  checkUpdate: () => call<UpdateStatus>("check_update"),
+  installUpdate: () => call<void>("install_update"),
 };
 
 export function on<T>(event: string, handler: (payload: T) => void): () => void {
@@ -208,6 +218,11 @@ let demoSettings: Settings = {
 };
 
 let demoCanUndo = false;
+// `?update=1` menampilkan keadaan "update siap" untuk pratinjau.
+let demoUpdate: UpdateStatus =
+  new URLSearchParams(location.search).get("update") === "1"
+    ? { state: "ready", version: "0.2.0", notes: null }
+    : { state: "idle" };
 const sleep = (ms: number) => new Promise((r) => setTimeout(r, ms));
 
 async function mock(cmd: string, args: Record<string, unknown> = {}): Promise<unknown> {
@@ -282,7 +297,22 @@ async function mock(cmd: string, args: Record<string, unknown> = {}): Promise<un
       await sleep(400);
       return undefined;
     case "app_status":
-      return { busy: false, can_undo: demoCanUndo, has_backup: true, data_dir: "~/Library/Application Support/Docky" };
+      return {
+        busy: false,
+        can_undo: demoCanUndo,
+        version: "0.1.0",
+        has_backup: true,
+        data_dir: "~/Library/Application Support/Docky",
+      };
+    case "update_status":
+      return demoUpdate;
+    case "check_update":
+      await sleep(600);
+      demoUpdate = { state: "ready", version: "0.2.0", notes: null };
+      mockEmit("update-status", demoUpdate);
+      return demoUpdate;
+    case "install_update":
+      return undefined;
     default:
       return undefined;
   }

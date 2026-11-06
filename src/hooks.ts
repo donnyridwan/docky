@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useMemo, useState } from "react";
-import { api, on, type InstalledApp, type Preset, type Settings } from "./api";
+import { api, on, type InstalledApp, type Preset, type Settings, type UpdateStatus } from "./api";
 
 /** App terpasang, dipindai sekali per jendela. `known` false selama pemindaian. */
 export function useInstalledApps() {
@@ -63,4 +63,14 @@ export function useDismiss(open: boolean, close: () => void, ref: React.RefObjec
       document.removeEventListener("keydown", onKey);
     };
   }, [open, close, ref]);
+}
+
+/** Status update otomatis, ikut berubah saat Rust mengirim event `update-status`. */
+export function useUpdateStatus() {
+  const [status, setStatus] = useState<UpdateStatus>({ state: "idle" });
+  useEffect(() => {
+    api.updateStatus().then(setStatus).catch(() => {});
+    return on<UpdateStatus>("update-status", setStatus);
+  }, []);
+  return status;
 }

@@ -15,7 +15,7 @@ import {
 } from "../api";
 import { AppTile } from "../components/AppTile";
 import { Icon } from "../components/Icon";
-import { useDismiss, useInstalledApps, usePresets, useSettings } from "../hooks";
+import { useDismiss, useInstalledApps, usePresets, useSettings, useUpdateStatus } from "../hooks";
 import { popupMenu } from "../menu";
 import "./panel.css";
 
@@ -38,6 +38,7 @@ export function Panel() {
   const { settings, save: saveSettings } = useSettings();
   const { byId, known, refresh: rescan } = useInstalledApps();
   const [view, setView] = useState<View>({ kind: "dock" });
+  const update = useUpdateStatus();
   const [status, setStatus] = useState<Status | null>(null);
   const [collapsed, setCollapsed] = useState(false);
   const [menuOpen, setMenuOpen] = useState(false);
@@ -181,6 +182,14 @@ export function Panel() {
     }
   };
 
+  const installUpdate = async () => {
+    try {
+      await api.installUpdate(); // Docky dibuka ulang dengan versi baru.
+    } catch (e) {
+      setView({ kind: "message", tone: "error", title: "Update belum dipasang", text: errorMessage(e) });
+    }
+  };
+
   const openHeaderMenu = (anchor: HTMLElement) => {
     if (!isTauri) return setMenuOpen((o) => !o);
     popupMenu(anchor, [
@@ -222,6 +231,16 @@ export function Panel() {
         </button>
         <span className="panel-title">Docky</span>
         <span className="spacer" />
+        {update.state === "ready" && (
+          <button
+            className="update-pill"
+            onClick={installUpdate}
+            disabled={busy}
+            title={`Pasang Docky ${update.version} lalu buka ulang`}
+          >
+            Restart untuk update <span aria-hidden>→</span>
+          </button>
+        )}
         <button
           className="icon-btn"
           onClick={() => setCollapsed((c) => !c)}

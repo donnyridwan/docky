@@ -1,6 +1,7 @@
 //! Docky: panel mengambang di atas dock, ikon menu bar, dan jendela Pengaturan.
 
 mod platform;
+mod updater;
 
 use std::collections::HashMap;
 use std::path::PathBuf;
@@ -18,6 +19,7 @@ use tauri::tray::{MouseButton, MouseButtonState, TrayIconBuilder, TrayIconEvent}
 use tauri::{AppHandle, Emitter, LogicalSize, Manager, PhysicalPosition, WebviewUrl, WebviewWindow, WebviewWindowBuilder};
 
 use platform::{SystemApps, SystemDock};
+use updater::{UpdateState, UpdateStatus};
 
 const PANEL: &str = "panel";
 const SETTINGS: &str = "settings";
@@ -187,16 +189,18 @@ async fn restore_original_dock(state: tauri::State<'_, AppState>) -> CmdResult<(
 struct Status {
     busy: bool,
     can_undo: bool,
+    version: String,
     has_backup: bool,
     data_dir: String,
 }
 
 #[tauri::command]
-fn app_status(state: tauri::State<'_, AppState>) -> Status {
+fn app_status(app: AppHandle, state: tauri::State<'_, AppState>) -> Status {
     let storage = &state.engine.storage;
     Status {
         busy: state.engine.is_busy(),
         can_undo: storage.load_snapshot().ok().flatten().is_some(),
+        version: app.package_info().version.to_string(),
         has_backup: storage.has_dock_backup(),
         data_dir: storage.dir().display().to_string(),
     }
@@ -229,6 +233,26 @@ fn open_settings(app: AppHandle) -> CmdResult<()> {
 #[tauri::command]
 fn quit_app(app: AppHandle) {
     app.exit(0);
+}
+
+#[tauri::command]
+fn update_status(state: tauri::State<'_, UpdateState>) -> UpdateStatus {
+    state.status()
+}
+
+/// Cek update sekarang (dari tombol "Periksa update").
+#[tauri::command]
+async fn check_update(app: AppHandle) -> UpdateStatus {
+    updater::check_and_download(&app, false).await
+}
+
+/// Pasang update yang sudah diunduh lalu buka ulang Docky.
+#[tauri::command]
+fn install_update(app: AppHandle, state: tauri::State<'_, AppState>) -> CmdResult<()> {
+    if state.engine.is_busy() {
+        return Err(CmdError("Tunggu sampai preset selesai berjalan.".into()));
+    }
+    updater::install_and_restart(&app).map_err(CmdError)
 }
 
 // ---- Jendela ----------------------------------------------------------
@@ -291,9 +315,12 @@ fn data_dir(app: &AppHandle) -> PathBuf {
 fn build_tray(app: &AppHandle) -> tauri::Result<()> {
     let settings = MenuItem::with_id(app, "settings", "Pengaturan…", true, None::<&str>)?;
     let original = MenuItem::with_id(app, "original", "Dock asli", true, None::<&str>)?;
+    let update = MenuItem::with_id(app, "update", "Periksa update", true, None::<&str>)?;
+    app.state::<UpdateState>().set_tray_item(update.clone());
     let quit = MenuItem::with_id(app, "quit", "Keluar Docky", true, None::<&str>)?;
     let sep = PredefinedMenuItem::separator(app)?;
-    let menu = Menu::with_items(app, &[&settings, &original, &sep, &quit])?;
+    let sep2 = PredefinedMenuItem::separator(app)?;
+    let menu = Menu::with_items(app, &[&settings, &original, &sep, &update, &sep2, &quit])?;
 
     TrayIconBuilder::with_id("docky")
         .icon(tauri::image::Image::from_bytes(include_bytes!("../icons/tray.png"))?)
@@ -314,6 +341,19 @@ fn build_tray(app: &AppHandle) -> tauri::Result<()> {
                     let _ = win.set_focus();
                 }
             }
+            "update" => {
+                let busy = app.state::<AppState>().engine.is_busy();
+                if app.state::<UpdateState>().is_ready() && !busy {
+                    if let Err(e) = updater::install_and_restart(app) {
+                        eprintln!("Docky: {e}");
+                    }
+                } else {
+                    let app = app.clone();
+                    tauri::async_runtime::spawn(async move {
+                        updater::check_and_download(&app, true).await;
+                    });
+                }
+            }
             "quit" => app.exit(0),
             _ => {}
         })
@@ -329,6 +369,9 @@ fn build_tray(app: &AppHandle) -> tauri::Result<()> {
 #[cfg_attr(mobile, tauri::mobile_entry_point)]
 pub fn run() {
     tauri::Builder::default()
+        .plugin(tauri_plugin_updater::Builder::new().build())
+        .plugin(tauri_plugin_notification::init())
+        .manage(UpdateState::default())
         .setup(|app| {
             // Tanpa ikon di dock: Docky hanya muncul di menu bar.
             #[cfg(target_os = "macos")]
@@ -345,6 +388,8 @@ pub fn run() {
             app.manage(AppState { engine: Arc::new(engine), icons: Mutex::new(HashMap::new()) });
 
             build_tray(&handle)?;
+            // Docky hanya terhubung ke internet untuk mengecek update.
+            updater::spawn_background_checks(handle.clone());
 
             // Tampilkan panel saat pertama kali dibuka, supaya pengguna tahu Docky ada di mana.
             if let Some(win) = app.get_webview_window(PANEL) {
@@ -370,6 +415,9 @@ pub fn run() {
             hide_panel,
             open_settings,
             quit_app,
+            update_status,
+            check_update,
+            install_update,
         ])
         .run(tauri::generate_context!())
         .expect("Docky gagal dijalankan");
