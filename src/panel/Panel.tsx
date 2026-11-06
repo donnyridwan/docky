@@ -21,6 +21,9 @@ import "./panel.css";
 
 type Tone = "ok" | "warn" | "error";
 
+/** Ukuran ikon app di area isi dock, dalam px. */
+const TILE_SIZE = 52;
+
 type View =
   | { kind: "dock" }
   | { kind: "running"; progress: Progress | null }
@@ -351,10 +354,11 @@ export function Panel() {
                         name={a.name}
                         installed={byId.get(a.bundle_id)}
                         known={known}
+                        size={TILE_SIZE}
                         title={`${a.name}${a.auto_open ? " · buka otomatis" : ""}${known && !byId.has(a.bundle_id) ? " · tidak ditemukan" : ""}`}
                       />
                     ))}
-                  <button className="tile add-tile" onClick={() => api.openSettings()} aria-label="Tambah app" title="Tambah app di Pengaturan">
+                  <button className="tile add-tile" style={{ width: TILE_SIZE, height: TILE_SIZE }} onClick={() => api.openSettings()} aria-label="Tambah app" title="Tambah app di Pengaturan">
                     <Icon name="plus" className="add-icon" />
                   </button>
                 </div>

@@ -66,7 +66,8 @@ fn new_id() -> String {
 }
 
 fn icon_data_url(path: &str) -> Option<String> {
-    let png = platform::icon_png(path, 64)?;
+    // 128 px supaya tetap tajam di layar Retina saat tampil 52-60 pt.
+    let png = platform::icon_png(path, 128)?;
     Some(format!("data:image/png;base64,{}", base64::engine::general_purpose::STANDARD.encode(png)))
 }
 

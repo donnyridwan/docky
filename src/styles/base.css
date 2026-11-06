@@ -172,6 +172,20 @@ input {
   display: block;
 }
 
+/* Ikon app macOS sudah punya margin transparan sekitar 10% di tiap sisi.
+   Gambar diperbesar sedikit supaya isi ikonnya memenuhi kotak tile. */
+.tile.has-icon {
+  overflow: visible;
+  border-radius: 0;
+}
+
+.tile.has-icon > img {
+  width: 118%;
+  height: 118%;
+  margin: -9%;
+  flex-shrink: 0;
+}
+
 .tile.missing {
   filter: grayscale(1);
   opacity: 0.35;
