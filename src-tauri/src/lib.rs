@@ -5,6 +5,7 @@ mod updater;
 
 use std::collections::HashMap;
 use std::path::PathBuf;
+use std::sync::atomic::{AtomicBool, Ordering};
 use std::sync::{Arc, Mutex};
 use std::time::{SystemTime, UNIX_EPOCH};
 
@@ -32,6 +33,9 @@ type SysEngine = Engine<SystemApps, SystemDock>;
 struct AppState {
     engine: Arc<SysEngine>,
     icons: Mutex<HashMap<String, Option<String>>>,
+    /// Panel sudah diseret pengguna: jangan pindahkan lagi ke atas dock
+    /// sampai pengguna memilih "Kembalikan ke atas dock".
+    panel_moved: AtomicBool,
 }
 
 /// Galat yang dikirim ke tampilan sebagai teks.
@@ -206,11 +210,39 @@ fn app_status(app: AppHandle, state: tauri::State<'_, AppState>) -> Status {
     }
 }
 
-/// Atur tinggi panel sesuai isinya, lalu letakkan tepat di atas dock.
+/// Atur tinggi panel sesuai isinya. Panel yang belum diseret diletakkan tepat
+/// di atas dock; panel yang sudah diseret tetap di tempatnya dengan tepi bawah
+/// yang sama, jadi tumbuh ke atas seperti panel di atas dock.
 #[tauri::command]
-fn resize_panel(app: AppHandle, height: f64) -> CmdResult<()> {
+fn resize_panel(app: AppHandle, state: tauri::State<'_, AppState>, height: f64) -> CmdResult<()> {
+    let Some(win) = app.get_webview_window(PANEL) else { return Ok(()) };
+    let height = height.clamp(60.0, 600.0);
+    if state.panel_moved.load(Ordering::SeqCst) {
+        let pos = win.outer_position()?;
+        let old_h = win.outer_size()?.height as i32;
+        let new_h = (height * win.scale_factor()?).round() as i32;
+        win.set_size(LogicalSize::new(PANEL_WIDTH, height))?;
+        win.set_position(PhysicalPosition::new(pos.x, pos.y + old_h - new_h))?;
+    } else {
+        win.set_size(LogicalSize::new(PANEL_WIDTH, height))?;
+        position_panel(&win)?;
+    }
+    Ok(())
+}
+
+/// Mulai menyeret panel. Dipanggil saat tombol mouse ditekan di header.
+#[tauri::command]
+fn start_panel_drag(window: WebviewWindow, state: tauri::State<'_, AppState>) -> CmdResult<()> {
+    state.panel_moved.store(true, Ordering::SeqCst);
+    window.start_dragging()?;
+    Ok(())
+}
+
+/// Kembalikan panel ke tempat asalnya, tepat di atas dock.
+#[tauri::command]
+fn reset_panel_position(app: AppHandle, state: tauri::State<'_, AppState>) -> CmdResult<()> {
+    state.panel_moved.store(false, Ordering::SeqCst);
     if let Some(win) = app.get_webview_window(PANEL) {
-        win.set_size(LogicalSize::new(PANEL_WIDTH, height.clamp(60.0, 600.0)))?;
         position_panel(&win)?;
     }
     Ok(())
@@ -277,7 +309,15 @@ fn position_panel(win: &WebviewWindow) -> tauri::Result<()> {
 
 fn show_panel(app: &AppHandle) {
     let Some(win) = app.get_webview_window(PANEL) else { return };
-    let _ = position_panel(&win);
+    let state = app.state::<AppState>();
+    // Posisi hasil seretan dipertahankan, kecuali layarnya sudah tidak ada
+    // (misalnya monitor kedua dicabut).
+    if state.panel_moved.load(Ordering::SeqCst) && win.current_monitor().ok().flatten().is_none() {
+        state.panel_moved.store(false, Ordering::SeqCst);
+    }
+    if !state.panel_moved.load(Ordering::SeqCst) {
+        let _ = position_panel(&win);
+    }
     let _ = win.show();
     let _ = win.set_focus();
     let _ = app.emit_to(PANEL, "panel-shown", ());
@@ -386,7 +426,11 @@ pub fn run() {
             if let Err(e) = engine.ensure_dock_backup() {
                 eprintln!("Docky: cadangan dock belum bisa dibuat: {e}");
             }
-            app.manage(AppState { engine: Arc::new(engine), icons: Mutex::new(HashMap::new()) });
+            app.manage(AppState {
+                engine: Arc::new(engine),
+                icons: Mutex::new(HashMap::new()),
+                panel_moved: AtomicBool::new(false),
+            });
 
             build_tray(&handle)?;
             // Docky hanya terhubung ke internet untuk mengecek update.
@@ -413,6 +457,8 @@ pub fn run() {
             restore_original_dock,
             app_status,
             resize_panel,
+            start_panel_drag,
+            reset_panel_position,
             hide_panel,
             open_settings,
             quit_app,

@@ -194,6 +194,7 @@ export function Panel() {
     if (!isTauri) return setMenuOpen((o) => !o);
     popupMenu(anchor, [
       { text: "Pengaturan…", action: () => api.openSettings() },
+      { text: "Kembalikan panel ke atas dock", action: () => api.resetPanelPosition() },
       {
         text: "Dock asli…",
         enabled: !busy && !!status?.has_backup,
@@ -225,7 +226,19 @@ export function Panel() {
 
   return (
     <div className="panel" ref={rootRef}>
-      <header className="panel-header">
+      <header
+        className="panel-header"
+        title="Seret untuk memindahkan panel. Klik dua kali untuk kembali ke atas dock."
+        onMouseDown={(e) => {
+          // Seret dari bagian kosong header; tombol di header tetap bisa diklik.
+          if (e.button === 0 && e.detail === 1 && !(e.target as HTMLElement).closest("button")) {
+            api.startPanelDrag().catch(() => {});
+          }
+        }}
+        onDoubleClick={(e) => {
+          if (!(e.target as HTMLElement).closest("button")) api.resetPanelPosition().catch(() => {});
+        }}
+      >
         <button className="icon-btn" onClick={() => api.hidePanel()} aria-label="Tutup panel" title="Tutup">
           <Icon name="close" dim />
         </button>
@@ -258,6 +271,9 @@ export function Panel() {
             <div className="menu header-menu" role="menu">
               <button role="menuitem" onClick={() => (setMenuOpen(false), api.openSettings())}>
                 Pengaturan…
+              </button>
+              <button role="menuitem" onClick={() => (setMenuOpen(false), api.resetPanelPosition())}>
+                Kembalikan panel ke atas dock
               </button>
               <button
                 role="menuitem"

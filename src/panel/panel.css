@@ -28,6 +28,12 @@ body {
   border-bottom: 1px solid var(--outline);
   border-radius: calc(var(--radius-panel) - 1px) calc(var(--radius-panel) - 1px) 0 0;
   flex-shrink: 0;
+  /* Header jadi pegangan untuk menyeret panel. */
+  cursor: grab;
+}
+
+.panel-header button {
+  cursor: default;
 }
 
 .panel-title {
