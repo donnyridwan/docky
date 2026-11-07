@@ -1,5 +1,5 @@
 import { useEffect, useState } from "react";
-import { api, errorMessage, MODE_LABEL, type Preset, type Status, type UpdateStatus } from "../api";
+import { api, errorMessage, MODE_LABEL, MODES, type Preset, type Status, type UpdateStatus } from "../api";
 import { AppTile } from "../components/AppTile";
 import { useInstalledApps, usePresets, useSettings, useUpdateStatus } from "../hooks";
 import appIcon from "../assets/app-icon.png";
@@ -273,8 +273,8 @@ function GeneralTab() {
 
       <div className="about muted small">
         <p>
-          {presets.length} preset · {presets.filter((p) => p.mode === "clean").length} {MODE_LABEL.clean.toLowerCase()},{" "}
-          {presets.filter((p) => p.mode === "dock_only").length} {MODE_LABEL.dock_only.toLowerCase()}
+          {presets.length} preset ·{" "}
+          {MODES.map(({ mode }) => `${presets.filter((p) => p.mode === mode).length} ${MODE_LABEL[mode].toLowerCase()}`).join(", ")}
         </p>
         <p>
           Data tersimpan di {status?.data_dir ?? "~/Library/Application Support/Docky"}. Docky hanya terhubung ke internet untuk

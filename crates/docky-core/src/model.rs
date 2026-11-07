@@ -14,6 +14,9 @@ pub enum PresetMode {
     Clean,
     /// "Ganti dock saja": hanya mengganti isi dock.
     DockOnly,
+    /// "Bersih brutal": tutup semua app (termasuk yang ada di preset), ganti dock,
+    /// lalu buka ulang app preset dari awal tanpa memulihkan jendela/tab lama.
+    Brutal,
 }
 
 /// Satu app di dalam preset. App dicatat dengan bundle ID, bukan lokasi file.
@@ -35,6 +38,13 @@ pub struct Preset {
     pub mode: PresetMode,
     #[serde(default)]
     pub apps: Vec<PresetApp>,
+}
+
+impl PresetMode {
+    /// Mode yang menutup dan membuka app (bukan hanya mengganti dock).
+    pub fn manages_apps(self) -> bool {
+        matches!(self, PresetMode::Clean | PresetMode::Brutal)
+    }
 }
 
 impl Preset {
@@ -191,6 +201,12 @@ impl RunSummary {
         if self.mode == PresetMode::Clean {
             parts.push(format!(
                 "{} app ditutup, {} dibuka.",
+                self.closed.len(),
+                self.opened.len()
+            ));
+        } else if self.mode == PresetMode::Brutal {
+            parts.push(format!(
+                "{} app ditutup, {} dibuka ulang dari awal.",
                 self.closed.len(),
                 self.opened.len()
             ));

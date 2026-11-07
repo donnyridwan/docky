@@ -14,6 +14,7 @@ Docky berjalan tanpa ikon di dock. Klik ikon Docky di menu bar untuk membuka pan
 - **Isi dock** menampilkan app di preset sesuai urutannya. Tombol bergaris putus-putus membuka Pengaturan untuk menambah app.
 - **Mode** di kanan:
   - *Bersih total*: tutup app di luar preset, ganti dock, lalu buka app yang ditandai "buka otomatis".
+  - *Bersih brutal*: tutup **semua** app, termasuk browser dan app di preset, ganti dock, lalu buka ulang app preset dari awal tanpa jendela dan tab lama (`open -F`). Yang dibuka ulang: app "buka otomatis" ditambah app preset yang tadi sedang terbuka. Docky, Finder, app menu bar, dan daftar Pengecualian dibiarkan; app dengan pekerjaan belum disimpan tetap tidak dipaksa tutup. Browser yang diatur memulihkan tab sendiri (misalnya Chrome "Continue where you left off", atau Arc) tetap membuka tab lamanya; matikan pengaturan itu kalau ingin benar-benar bersih.
   - *Ganti dock saja*: hanya mengganti isi dock.
 - **+** membuat preset dari kondisi sekarang: app yang sedang terbuka ditandai "buka otomatis", app yang hanya ada di dock ditandai tidak.
 - **Kembalikan** membatalkan preset terakhir: dock dipulihkan dan app yang tadi ditutup dibuka lagi. Dokumen di dalam app belum tentu ikut kembali, tergantung apakah app itu memulihkan jendelanya sendiri.
@@ -38,7 +39,7 @@ Yang ditutup hanya app yang sama sekali tidak ada di preset. Notion dibiarkan ka
 4. **Ganti isi dock**: deretan app diganti sesuai preset dan urutannya, folder di sisi kanan (misalnya Downloads) dibiarkan, "recent apps" dimatikan, lalu Dock di-restart. Setelah restart isi dock dibaca ulang; kalau tidak sesuai, isi sebelumnya dipulihkan.
 5. **Buka app "buka otomatis"**: yang sudah berjalan dilewati. Langkah ini sengaja setelah restart Dock.
 
-Mode *Ganti dock saja* hanya menjalankan langkah 1 dan 4.
+Mode *Bersih brutal* menjalankan lima langkah yang sama, tapi langkah 2 menutup semua app (bukan hanya yang di luar preset) dan langkah 5 membuka ulang app dari awal. Mode *Ganti dock saja* hanya menjalankan langkah 1 dan 4.
 
 Prinsip penanganan masalah: kalau ragu, Docky lebih baik tidak mengubah apa pun daripada merusak Mac.
 

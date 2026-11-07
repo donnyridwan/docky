@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useState } from "react";
-import { api, errorMessage, MODE_LABEL, type InstalledApp, type Preset, type PresetMode } from "../api";
+import { api, errorMessage, MODE_LABEL, MODES, type InstalledApp, type Preset } from "../api";
 import { AppTile } from "../components/AppTile";
 import { AppPicker } from "./AppPicker";
 
@@ -81,7 +81,7 @@ export function PresetEditor({ preset, isNew, byId, apps, known, onSaved, onDele
       <div className="row">
         <span className="label">Mode</span>
         <div className="segmented" role="radiogroup" aria-label="Mode">
-          {(["clean", "dock_only"] as PresetMode[]).map((m) => (
+          {MODES.map(({ mode: m }) => (
             <button key={m} role="radio" aria-checked={draft.mode === m} onClick={() => setDraft({ ...draft, mode: m })}>
               {MODE_LABEL[m]}
             </button>
@@ -91,7 +91,9 @@ export function PresetEditor({ preset, isNew, byId, apps, known, onSaved, onDele
       <p className="hint">
         {draft.mode === "clean"
           ? "Menutup app di luar preset, mengganti isi dock, lalu membuka app yang ditandai buka otomatis."
-          : "Hanya mengganti isi dock. Tidak ada app yang ditutup atau dibuka."}
+          : draft.mode === "brutal"
+            ? "Menutup semua app, termasuk browser dan app di preset, lalu membukanya ulang dari awal tanpa jendela dan tab lama. Docky, Finder, app menu bar, dan Pengecualian dibiarkan. App dengan pekerjaan belum disimpan tidak dipaksa tutup."
+            : "Hanya mengganti isi dock. Tidak ada app yang ditutup atau dibuka."}
       </p>
 
       <div className="section-head">

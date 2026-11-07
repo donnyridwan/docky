@@ -27,6 +27,9 @@ pub trait AppController: Send + Sync {
     fn is_running(&self, bundle_id: &str) -> bool;
     /// Buka app. Mengembalikan pesan galat kalau gagal.
     fn open(&self, bundle_id: &str) -> Result<(), String>;
+    /// Buka app dari awal, tanpa memulihkan jendela dan tab terakhirnya
+    /// (macOS: `open -F`). Dipakai mode "Bersih brutal".
+    fn open_fresh(&self, bundle_id: &str) -> Result<(), String>;
     /// Lokasi .app untuk bundle ID ini, atau `None` kalau tidak terpasang.
     fn app_path(&self, bundle_id: &str) -> Option<String>;
 }
@@ -53,6 +56,9 @@ impl<T: AppController + ?Sized> AppController for std::sync::Arc<T> {
     }
     fn open(&self, bundle_id: &str) -> Result<(), String> {
         (**self).open(bundle_id)
+    }
+    fn open_fresh(&self, bundle_id: &str) -> Result<(), String> {
+        (**self).open_fresh(bundle_id)
     }
     fn app_path(&self, bundle_id: &str) -> Option<String> {
         (**self).app_path(bundle_id)
@@ -183,7 +189,7 @@ impl<A: AppController, D: DockManager> Engine<A, D> {
         let started = Instant::now();
 
         let steps: &[Step] = match preset.mode {
-            PresetMode::Clean => &[
+            PresetMode::Clean | PresetMode::Brutal => &[
                 Step::Snapshot,
                 Step::CloseApps,
                 Step::WaitForQuit,
@@ -240,13 +246,16 @@ impl<A: AppController, D: DockManager> Engine<A, D> {
         self.storage.save_snapshot(&snapshot)?;
         emit(Step::Snapshot, StepStatus::Done, None);
 
-        if preset.mode == PresetMode::Clean {
-            // 2. Tutup app di luar preset, semua bersamaan.
-            let targets: Vec<RunningApp> =
+        if preset.mode.manages_apps() {
+            // 2. Tutup app di luar preset (Bersih brutal: semua app), semua bersamaan.
+            let targets: Vec<RunningApp> = if preset.mode == PresetMode::Brutal {
+                plan::apps_to_close_all(&running, &settings.exclusions, &self.self_bundle_id)
+            } else {
                 plan::apps_to_close(&running, preset, &settings.exclusions, &self.self_bundle_id)
-                    .into_iter()
-                    .cloned()
-                    .collect();
+            }
+            .into_iter()
+            .cloned()
+            .collect();
             emit(Step::CloseApps, StepStatus::Started, Some(format!("{} app", targets.len())));
             for app in &targets {
                 self.apps.request_quit(&app.bundle_id);
@@ -301,15 +310,23 @@ impl<A: AppController, D: DockManager> Engine<A, D> {
             }
         }
 
-        if preset.mode == PresetMode::Clean {
+        if preset.mode.manages_apps() {
             // 5. Buka app "buka otomatis", sesudah restart Dock supaya tidak terganggu.
+            //    Bersih brutal: buka ulang dari awal tanpa jendela/tab lama.
             emit(Step::OpenApps, StepStatus::Started, None);
             let running_now = self.apps.running_apps();
-            for app in plan::apps_to_open(preset, &running_now) {
+            let brutal = preset.mode == PresetMode::Brutal;
+            let to_open = if brutal {
+                plan::apps_to_reopen(preset, &running, &running_now)
+            } else {
+                plan::apps_to_open(preset, &running_now)
+            };
+            for app in to_open {
                 if summary.missing.contains(&app.name) {
                     continue;
                 }
-                match self.apps.open(&app.bundle_id) {
+                let result = if brutal { self.apps.open_fresh(&app.bundle_id) } else { self.apps.open(&app.bundle_id) };
+                match result {
                     Ok(()) => summary.opened.push(app.name.clone()),
                     Err(_) => summary.open_failed.push(app.name.clone()),
                 }
@@ -489,6 +506,43 @@ mod tests {
         let restart = log.iter().position(|e| e == "restart").unwrap();
         let first_open = log.iter().position(|e| e.starts_with("open")).unwrap();
         assert!(restart < first_open, "{log:?}");
+    }
+
+    #[test]
+    fn brutal_closes_everything_and_reopens_fresh() {
+        let s = setup("dock-macos14.plist");
+        s.apps.launch("notion.id", "Notion", true);
+        let mut preset = kerja();
+        preset.mode = PresetMode::Brutal;
+        let mut events = Vec::new();
+        let summary = s.engine.run_preset(&preset, &fast(), &mut |p| events.push(p)).unwrap();
+
+        // Figma & Notion ada di preset tapi tetap ditutup; Finder & app menu bar dibiarkan.
+        assert_eq!(summary.closed, vec!["Figma", "Safari", "Music", "Notion"]);
+        assert!(s.apps.is_running("com.apple.finder"));
+        assert!(s.apps.is_running("com.example.menubar"));
+        // Dibuka ulang dari awal: buka otomatis + yang tadi terbuka (Notion), urut dock.
+        assert_eq!(summary.opened, vec!["Claude", "Figma", "Slack", "Notion"]);
+        assert_eq!(
+            s.apps.fresh_open_calls(),
+            vec!["com.anthropic.claudefordesktop", "com.figma.Desktop", "com.tinyspeck.slackmacgap", "notion.id"]
+        );
+        assert!(s.apps.open_calls().iter().all(|id| s.apps.fresh_open_calls().contains(id)));
+        let done: Vec<_> = events.iter().filter(|e| e.status == StepStatus::Done).map(|e| e.step.number()).collect();
+        assert_eq!(done, vec![1, 2, 3, 4, 5]);
+        assert_eq!(summary.sentence(), "4 app ditutup, 4 dibuka ulang dari awal.");
+    }
+
+    #[test]
+    fn brutal_does_not_force_quit_unsaved_work() {
+        let s = setup("dock-macos14.plist");
+        s.apps.make_stubborn("com.figma.Desktop");
+        let mut preset = kerja();
+        preset.mode = PresetMode::Brutal;
+        let summary = s.engine.run_preset(&preset, &fast(), &mut |_| {}).unwrap();
+        assert_eq!(summary.still_running, vec!["Figma"]);
+        assert!(s.apps.is_running("com.figma.Desktop"));
+        assert!(!s.apps.fresh_open_calls().contains(&"com.figma.Desktop".to_string()));
     }
 
     #[test]

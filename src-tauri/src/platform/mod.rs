@@ -24,6 +24,9 @@ mod unsupported {
         fn open(&self, _: &str) -> Result<(), String> {
             Err(MSG.into())
         }
+        fn open_fresh(&self, _: &str) -> Result<(), String> {
+            Err(MSG.into())
+        }
         fn app_path(&self, _: &str) -> Option<String> {
             None
         }

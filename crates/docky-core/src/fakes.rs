@@ -17,6 +17,7 @@ struct AppState {
     stubborn: HashSet<String>,
     open_fails: HashSet<String>,
     open_calls: Vec<String>,
+    fresh_open_calls: Vec<String>,
     quit_calls: Vec<String>,
 }
 
@@ -65,6 +66,11 @@ impl FakeAppController {
         self.state.lock().unwrap().open_calls.clone()
     }
 
+    /// App yang dibuka dari awal (tanpa jendela/tab lama).
+    pub fn fresh_open_calls(&self) -> Vec<String> {
+        self.state.lock().unwrap().fresh_open_calls.clone()
+    }
+
     pub fn quit_calls(&self) -> Vec<String> {
         self.state.lock().unwrap().quit_calls.clone()
     }
@@ -102,6 +108,11 @@ impl AppController for FakeAppController {
             s.running.push(RunningApp { bundle_id: bundle_id.into(), name, regular: true });
         }
         Ok(())
+    }
+
+    fn open_fresh(&self, bundle_id: &str) -> Result<(), String> {
+        self.state.lock().unwrap().fresh_open_calls.push(bundle_id.into());
+        self.open(bundle_id)
     }
 
     fn app_path(&self, bundle_id: &str) -> Option<String> {

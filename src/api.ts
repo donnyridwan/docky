@@ -4,7 +4,7 @@
 import { invoke } from "@tauri-apps/api/core";
 import { listen, type UnlistenFn } from "@tauri-apps/api/event";
 
-export type PresetMode = "clean" | "dock_only";
+export type PresetMode = "clean" | "dock_only" | "brutal";
 
 export interface PresetApp {
   bundle_id: string;
@@ -83,8 +83,16 @@ export type UpdateStatus =
   | { state: "ready"; version: string; notes: string | null }
   | { state: "error"; message: string };
 
+/** Urutan mode di menu, dengan penjelasan singkat. */
+export const MODES: { mode: PresetMode; hint: string }[] = [
+  { mode: "clean", hint: "Tutup app di luar preset, ganti dock, buka app" },
+  { mode: "brutal", hint: "Tutup semua app, ganti dock, buka ulang dari awal" },
+  { mode: "dock_only", hint: "Hanya ganti isi dock" },
+];
+
 export const MODE_LABEL: Record<PresetMode, string> = {
   clean: "Bersih total",
+  brutal: "Bersih brutal",
   dock_only: "Ganti dock saja",
 };
 
@@ -101,6 +109,7 @@ export function joinNames(names: string[]): string {
 export function summarySentence(s: RunSummary): string {
   const parts: string[] = [];
   if (s.mode === "clean") parts.push(`${s.closed.length} app ditutup, ${s.opened.length} dibuka.`);
+  else if (s.mode === "brutal") parts.push(`${s.closed.length} app ditutup, ${s.opened.length} dibuka ulang dari awal.`);
   else if (s.dock_changed) parts.push("Dock sudah diganti.");
   if (s.still_running.length)
     parts.push(`${joinNames(s.still_running)} masih terbuka karena ada pekerjaan belum disimpan.`);
@@ -263,7 +272,7 @@ async function mock(cmd: string, args: Record<string, unknown> = {}): Promise<un
     case "run_preset": {
       const preset = demoPresets.find((p) => p.id === args.id)!;
       const steps: [Step, string][] =
-        preset.mode === "clean"
+        preset.mode !== "dock_only"
           ? [
               ["snapshot", "Memotret kondisi sekarang"],
               ["close_apps", "Menutup app di luar preset"],
@@ -284,9 +293,9 @@ async function mock(cmd: string, args: Record<string, unknown> = {}): Promise<un
       return {
         preset_name: preset.name,
         mode: preset.mode,
-        closed: preset.mode === "clean" ? ["Safari", "Music", "Spotify", "TextEdit"] : [],
-        opened: preset.mode === "clean" ? ["Claude", "Slack"] : [],
-        still_running: preset.mode === "clean" ? ["Figma"] : [],
+        closed: preset.mode !== "dock_only" ? ["Safari", "Music", "Spotify", "TextEdit"] : [],
+        opened: preset.mode !== "dock_only" ? ["Claude", "Slack"] : [],
+        still_running: preset.mode !== "dock_only" ? ["Figma"] : [],
         open_failed: [],
         missing: [],
         dock_changed: true,

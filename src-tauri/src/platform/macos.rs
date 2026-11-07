@@ -17,6 +17,15 @@ use objc2_foundation::{NSDictionary, NSPoint, NSRect, NSSize, NSString};
 
 const DOCK_BUNDLE_ID: &str = "com.apple.dock";
 
+fn run_open(args: &[&str]) -> Result<(), String> {
+    let out = Command::new("/usr/bin/open").args(args).output().map_err(|e| e.to_string())?;
+    if out.status.success() {
+        Ok(())
+    } else {
+        Err(String::from_utf8_lossy(&out.stderr).trim().to_string())
+    }
+}
+
 fn apps_with_id(bundle_id: &str) -> Vec<objc2::rc::Retained<NSRunningApplication>> {
     unsafe {
         NSRunningApplication::runningApplicationsWithBundleIdentifier(&NSString::from_str(bundle_id))
@@ -62,15 +71,12 @@ impl AppController for MacApps {
     }
 
     fn open(&self, bundle_id: &str) -> Result<(), String> {
-        let out = Command::new("/usr/bin/open")
-            .args(["-b", bundle_id])
-            .output()
-            .map_err(|e| e.to_string())?;
-        if out.status.success() {
-            Ok(())
-        } else {
-            Err(String::from_utf8_lossy(&out.stderr).trim().to_string())
-        }
+        run_open(&["-b", bundle_id])
+    }
+
+    fn open_fresh(&self, bundle_id: &str) -> Result<(), String> {
+        // -F: buka tanpa memulihkan jendela terakhir (state macOS dibuang).
+        run_open(&["-F", "-b", bundle_id])
     }
 
     fn app_path(&self, bundle_id: &str) -> Option<String> {

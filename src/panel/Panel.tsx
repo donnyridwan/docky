@@ -4,6 +4,7 @@ import {
   errorMessage,
   joinNames,
   MODE_LABEL,
+  MODES,
   on,
   summarySentence,
   type Preset,
@@ -203,7 +204,7 @@ export function Panel() {
     if (!isTauri) return setModeOpen((o) => !o);
     popupMenu(
       anchor,
-      (["clean", "dock_only"] as PresetMode[]).map((m) => ({
+      MODES.map(({ mode: m }) => ({
         text: MODE_LABEL[m],
         checked: selected.mode === m,
         action: () => setMode(m),
@@ -353,12 +354,12 @@ export function Panel() {
                   </button>
                   {modeOpen && (
                     <div className="menu mode-menu" role="menu">
-                      {(["clean", "dock_only"] as PresetMode[]).map((m) => (
+                      {MODES.map(({ mode: m, hint }) => (
                         <button key={m} role="menuitemradio" aria-checked={selected.mode === m} onClick={() => setMode(m)}>
                           <span className="check">{selected.mode === m && <Icon name="check" />}</span>
                           <span>
                             {MODE_LABEL[m]}
-                            <small>{m === "clean" ? "Tutup, ganti dock, buka app" : "Hanya ganti isi dock"}</small>
+                            <small>{hint}</small>
                           </span>
                         </button>
                       ))}

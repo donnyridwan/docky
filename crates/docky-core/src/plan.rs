@@ -33,6 +33,36 @@ pub fn apps_to_close<'a>(
         .collect()
 }
 
+/// Mode "Bersih brutal": semua app biasa ditutup, termasuk yang ada di preset.
+/// Yang tetap dilewati: daftar pengecualian, Finder, Docky sendiri, dan app
+/// latar belakang / menu bar.
+pub fn apps_to_close_all<'a>(
+    running: &'a [RunningApp],
+    exclusions: &[String],
+    self_bundle_id: &str,
+) -> Vec<&'a RunningApp> {
+    let empty = Preset { id: String::new(), name: String::new(), mode: PresetMode::Brutal, apps: Vec::new() };
+    apps_to_close(running, &empty, exclusions, self_bundle_id)
+}
+
+/// Mode "Bersih brutal": app preset yang dibuka ulang dari awal, sesuai urutan
+/// dock. Yaitu app "buka otomatis" ditambah app preset yang tadi sedang terbuka,
+/// kecuali yang masih berjalan (menolak menutup karena ada pekerjaan belum disimpan).
+pub fn apps_to_reopen<'a>(
+    preset: &'a Preset,
+    running_before: &[RunningApp],
+    running_now: &[RunningApp],
+) -> Vec<&'a PresetApp> {
+    let before: HashSet<&str> = running_before.iter().map(|a| a.bundle_id.as_str()).collect();
+    let now: HashSet<&str> = running_now.iter().map(|a| a.bundle_id.as_str()).collect();
+    preset
+        .sorted_apps()
+        .into_iter()
+        .filter(|a| a.auto_open || before.contains(a.bundle_id.as_str()))
+        .filter(|a| !now.contains(a.bundle_id.as_str()))
+        .collect()
+}
+
 /// App "buka otomatis" yang belum berjalan, sesuai urutan dock.
 /// App yang sudah terbuka tidak dibuka ulang.
 pub fn apps_to_open<'a>(preset: &'a Preset, running: &[RunningApp]) -> Vec<&'a PresetApp> {
@@ -178,6 +208,35 @@ mod tests {
             .collect();
         // Figma sudah berjalan, Notion bukan buka otomatis.
         assert_eq!(ids, vec!["com.anthropic.claudefordesktop", "com.tinyspeck.slackmacgap"]);
+    }
+
+    #[test]
+    fn brutal_closes_preset_apps_too_but_keeps_exclusions_and_finder() {
+        let running = vec![
+            run("com.figma.Desktop", true), // di preset: tetap ditutup
+            run("com.google.Chrome", true),
+            run(FINDER_BUNDLE_ID, true),
+            run("id.docky", true),
+            run("com.example.menubar", false),
+            run("com.1password.1password", true),
+        ];
+        let excl = vec!["com.1password.1password".to_string()];
+        let ids: Vec<_> = apps_to_close_all(&running, &excl, "id.docky")
+            .iter()
+            .map(|a| a.bundle_id.as_str())
+            .collect();
+        assert_eq!(ids, vec!["com.figma.Desktop", "com.google.Chrome"]);
+    }
+
+    #[test]
+    fn brutal_reopens_auto_open_and_previously_open_preset_apps() {
+        let before = vec![run("notion.id", true), run("com.figma.Desktop", true), run("com.spotify.client", true)];
+        // Figma menolak menutup (ada pekerjaan belum disimpan): tidak dibuka ulang.
+        let now = vec![run("com.figma.Desktop", true)];
+        let preset = kerja();
+        let ids: Vec<_> = apps_to_reopen(&preset, &before, &now).iter().map(|a| a.bundle_id.as_str()).collect();
+        // Claude & Slack (buka otomatis) + Notion (tadi terbuka). Spotify tidak di preset.
+        assert_eq!(ids, vec!["com.anthropic.claudefordesktop", "com.tinyspeck.slackmacgap", "notion.id"]);
     }
 
     #[test]
