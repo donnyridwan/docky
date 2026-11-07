@@ -136,6 +136,7 @@ export const api = {
   hidePanel: () => call<void>("hide_panel"),
   openSettings: () => call<void>("open_settings"),
   quit: () => call<void>("quit_app"),
+  notify: (title: string, body: string) => call<void>("notify", { title, body }),
   updateStatus: () => call<UpdateStatus>("update_status"),
   checkUpdate: () => call<UpdateStatus>("check_update"),
   installUpdate: () => call<void>("install_update"),
@@ -314,6 +315,9 @@ async function mock(cmd: string, args: Record<string, unknown> = {}): Promise<un
       mockEmit("update-status", demoUpdate);
       return demoUpdate;
     case "install_update":
+      return undefined;
+    case "notify":
+      console.info(`[notifikasi] ${args.title}: ${args.body}`);
       return undefined;
     default:
       return undefined;

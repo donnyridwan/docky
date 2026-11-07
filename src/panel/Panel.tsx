@@ -9,7 +9,6 @@ import {
   type Preset,
   type PresetMode,
   type Progress,
-  type RunSummary,
   type Status,
   isTauri,
 } from "../api";
@@ -19,22 +18,14 @@ import { useDismiss, useInstalledApps, usePresets, useSettings, useUpdateStatus 
 import { popupMenu } from "../menu";
 import "./panel.css";
 
-type Tone = "ok" | "warn" | "error";
-
 /** Ukuran ikon app di area isi dock, dalam px. */
 const TILE_SIZE = 52;
 
 type View =
   | { kind: "dock" }
   | { kind: "running"; progress: Progress | null }
-  | { kind: "message"; tone: Tone; title: string; text: string }
   | { kind: "confirm-original" };
 
-function toneFor(s: RunSummary): Tone {
-  if (s.dock_error) return "error";
-  if (s.still_running.length || s.missing.length || s.open_failed.length) return "warn";
-  return "ok";
-}
 
 export function Panel() {
   const { presets, warning, clearWarning, loaded } = usePresets();
@@ -91,7 +82,7 @@ export function Panel() {
   // Pesan file preset rusak ditampilkan sekali.
   useEffect(() => {
     if (warning) {
-      setView({ kind: "message", tone: "error", title: "File preset rusak", text: warning });
+      report("File preset rusak", warning);
       clearWarning();
     }
   }, [warning, clearWarning]);
@@ -100,6 +91,12 @@ export function Panel() {
     presets.find((p) => p.id === settings?.selected_preset) ?? presets[0];
   const busy = view.kind === "running" || !!status?.busy;
   const showWelcome = settings !== null && !settings.welcome_seen && view.kind === "dock";
+
+  /** Kabar hasil lewat notifikasi macOS, supaya panel tetap menampilkan isi dock. */
+  const report = (title: string, body: string) => {
+    api.notify(title, body).catch(() => {});
+    setView({ kind: "dock" });
+  };
 
   const select = (p: Preset) => {
     if (busy || !settings) return;
@@ -113,7 +110,7 @@ export function Panel() {
     try {
       await api.savePreset({ ...selected, mode });
     } catch (e) {
-      setView({ kind: "message", tone: "error", title: "Mode tidak tersimpan", text: errorMessage(e) });
+      report("Mode tidak tersimpan", errorMessage(e));
     }
   };
 
@@ -122,14 +119,9 @@ export function Panel() {
     setView({ kind: "running", progress: null });
     try {
       const summary = await api.runPreset(selected.id);
-      setView({
-        kind: "message",
-        tone: toneFor(summary),
-        title: `Preset ${summary.preset_name} selesai`,
-        text: summarySentence(summary),
-      });
+      report(`Preset ${summary.preset_name} selesai`, summarySentence(summary));
     } catch (e) {
-      setView({ kind: "message", tone: "error", title: "Preset tidak dijalankan", text: errorMessage(e) });
+      report("Preset tidak dijalankan", errorMessage(e));
     } finally {
       refreshStatus();
     }
@@ -144,9 +136,9 @@ export function Panel() {
       if (r.reopened.length) parts.push(`${joinNames(r.reopened)} dibuka lagi.`);
       if (r.open_failed.length) parts.push(`${joinNames(r.open_failed)} gagal dibuka.`);
       parts.push("Dokumen di dalam app belum tentu ikut kembali.");
-      setView({ kind: "message", tone: r.open_failed.length ? "warn" : "ok", title: "Dikembalikan", text: parts.join(" ") });
+      report("Dikembalikan", parts.join(" "));
     } catch (e) {
-      setView({ kind: "message", tone: "error", title: "Tidak bisa dikembalikan", text: errorMessage(e) });
+      report("Tidak bisa dikembalikan", errorMessage(e));
     } finally {
       refreshStatus();
     }
@@ -156,9 +148,9 @@ export function Panel() {
     setView({ kind: "running", progress: null });
     try {
       await api.restoreOriginalDock();
-      setView({ kind: "message", tone: "ok", title: "Dock asli dipulihkan", text: "Isi dock kembali seperti sebelum Docky dipakai." });
+      report("Dock asli dipulihkan", "Isi dock kembali seperti sebelum Docky dipakai.");
     } catch (e) {
-      setView({ kind: "message", tone: "error", title: "Dock asli tidak dipulihkan", text: errorMessage(e) });
+      report("Dock asli tidak dipulihkan", errorMessage(e));
     } finally {
       refreshStatus();
     }
@@ -174,14 +166,12 @@ export function Panel() {
       const saved = await api.savePreset(draft);
       const created = saved.find((p) => p.name === name) ?? saved[saved.length - 1];
       if (settings) await saveSettings({ ...settings, selected_preset: created.id, welcome_seen: true });
-      setView({
-        kind: "message",
-        tone: "ok",
-        title: `${name} dibuat`,
-        text: `${created.apps.length} app dari kondisi sekarang. App yang sedang terbuka ditandai buka otomatis. Ubah nama dan urutannya di Pengaturan.`,
-      });
+      report(
+        `${name} dibuat`,
+        `${created.apps.length} app dari kondisi sekarang. Ubah nama dan urutannya di Pengaturan.`,
+      );
     } catch (e) {
-      setView({ kind: "message", tone: "error", title: "Preset tidak dibuat", text: errorMessage(e) });
+      report("Preset tidak dibuat", errorMessage(e));
     }
   };
 
@@ -189,7 +179,7 @@ export function Panel() {
     try {
       await api.installUpdate(); // Docky dibuka ulang dengan versi baru.
     } catch (e) {
-      setView({ kind: "message", tone: "error", title: "Update belum dipasang", text: errorMessage(e) });
+      report("Update belum dipasang", errorMessage(e));
     }
   };
 
@@ -296,7 +286,7 @@ export function Panel() {
 
       {!collapsed && (
         <div className="panel-body">
-          <div className={`field${view.kind === "message" ? ` tone-${view.tone}` : ""}`} aria-live="polite">
+          <div className="field" aria-live="polite">
             {showWelcome ? (
               <div className="field-text">
                 <div className="field-title">Selamat datang di Docky</div>
@@ -315,14 +305,6 @@ export function Panel() {
               </div>
             ) : view.kind === "running" ? (
               <RunProgress progress={view.progress} />
-            ) : view.kind === "message" ? (
-              <div className="field-text">
-                <div className="field-title">{view.title}</div>
-                <p>{view.text}</p>
-                <button className="icon-btn dismiss" onClick={() => setView({ kind: "dock" })} aria-label="Tutup pesan" title="Tutup">
-                  <Icon name="close" dim />
-                </button>
-              </div>
             ) : view.kind === "confirm-original" ? (
               <div className="field-text">
                 <div className="field-title">Pulihkan dock asli?</div>

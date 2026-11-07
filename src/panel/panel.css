@@ -109,14 +109,6 @@ body {
   border-radius: var(--radius-field);
 }
 
-.field.tone-warn {
-  box-shadow: inset 3px 0 0 var(--warning);
-}
-
-.field.tone-error {
-  box-shadow: inset 3px 0 0 var(--danger);
-}
-
 .dock-apps {
   display: flex;
   align-items: center;
@@ -212,11 +204,6 @@ body {
   padding: 0 12px;
 }
 
-.dismiss {
-  position: absolute;
-  top: 12px;
-  right: 12px;
-}
 
 .steps {
   display: flex;

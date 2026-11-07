@@ -17,6 +17,7 @@ use docky_core::{
 use serde::Serialize;
 use tauri::menu::{Menu, MenuItem, PredefinedMenuItem};
 use tauri::tray::{MouseButton, MouseButtonState, TrayIconBuilder, TrayIconEvent};
+use tauri_plugin_notification::NotificationExt;
 use tauri::{AppHandle, Emitter, LogicalSize, Manager, PhysicalPosition, WebviewUrl, WebviewWindow, WebviewWindowBuilder};
 
 use platform::{SystemApps, SystemDock};
@@ -263,6 +264,13 @@ fn open_settings(app: AppHandle) -> CmdResult<()> {
     Ok(())
 }
 
+/// Notifikasi macOS untuk hasil preset, Kembalikan, dan galat. Muncul sebentar
+/// di pojok layar lalu hilang, jadi tidak menutupi panel.
+#[tauri::command]
+fn notify(app: AppHandle, title: String, body: String) {
+    let _ = app.notification().builder().title(title).body(body).show();
+}
+
 #[tauri::command]
 fn quit_app(app: AppHandle) {
     app.exit(0);
@@ -463,6 +471,7 @@ pub fn run() {
             hide_panel,
             open_settings,
             quit_app,
+            notify,
             update_status,
             check_update,
             install_update,
