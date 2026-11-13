@@ -45,22 +45,12 @@ pub fn apps_to_close_all<'a>(
     apps_to_close(running, &empty, exclusions, self_bundle_id)
 }
 
-/// Mode "Bersih brutal": app preset yang dibuka ulang dari awal, sesuai urutan
-/// dock. Yaitu app "buka otomatis" ditambah app preset yang tadi sedang terbuka,
-/// kecuali yang masih berjalan (menolak menutup karena ada pekerjaan belum disimpan).
-pub fn apps_to_reopen<'a>(
-    preset: &'a Preset,
-    running_before: &[RunningApp],
-    running_now: &[RunningApp],
-) -> Vec<&'a PresetApp> {
-    let before: HashSet<&str> = running_before.iter().map(|a| a.bundle_id.as_str()).collect();
-    let now: HashSet<&str> = running_now.iter().map(|a| a.bundle_id.as_str()).collect();
-    preset
-        .sorted_apps()
-        .into_iter()
-        .filter(|a| a.auto_open || before.contains(a.bundle_id.as_str()))
-        .filter(|a| !now.contains(a.bundle_id.as_str()))
-        .collect()
+/// Mode "Bersih brutal": app yang dibuka ulang dari awal, sesuai urutan dock.
+/// Hanya app yang "buka otomatis"-nya menyala; app dengan saklar mati tetap
+/// tertutup walaupun tadi sedang terbuka. App yang masih berjalan (menolak
+/// menutup karena ada pekerjaan belum disimpan) tidak dibuka lagi.
+pub fn apps_to_reopen<'a>(preset: &'a Preset, running_now: &[RunningApp]) -> Vec<&'a PresetApp> {
+    apps_to_open(preset, running_now)
 }
 
 /// App "buka otomatis" yang belum berjalan, sesuai urutan dock.
@@ -229,14 +219,13 @@ mod tests {
     }
 
     #[test]
-    fn brutal_reopens_auto_open_and_previously_open_preset_apps() {
-        let before = vec![run("notion.id", true), run("com.figma.Desktop", true), run("com.spotify.client", true)];
+    fn brutal_reopens_only_auto_open_apps() {
         // Figma menolak menutup (ada pekerjaan belum disimpan): tidak dibuka ulang.
+        // Notion "buka otomatis"-nya mati: tetap tertutup walaupun tadi terbuka.
         let now = vec![run("com.figma.Desktop", true)];
         let preset = kerja();
-        let ids: Vec<_> = apps_to_reopen(&preset, &before, &now).iter().map(|a| a.bundle_id.as_str()).collect();
-        // Claude & Slack (buka otomatis) + Notion (tadi terbuka). Spotify tidak di preset.
-        assert_eq!(ids, vec!["com.anthropic.claudefordesktop", "com.tinyspeck.slackmacgap", "notion.id"]);
+        let ids: Vec<_> = apps_to_reopen(&preset, &now).iter().map(|a| a.bundle_id.as_str()).collect();
+        assert_eq!(ids, vec!["com.anthropic.claudefordesktop", "com.tinyspeck.slackmacgap"]);
     }
 
     #[test]

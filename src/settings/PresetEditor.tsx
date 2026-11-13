@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { api, errorMessage, MODE_LABEL, MODES, type InstalledApp, type Preset } from "../api";
 import { AppTile } from "../components/AppTile";
 import { AppPicker } from "./AppPicker";
@@ -28,15 +28,51 @@ export function PresetEditor({ preset, isNew, byId, apps, known, onSaved, onDele
   const [overIndex, setOverIndex] = useState<number | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [confirmDelete, setConfirmDelete] = useState(false);
+  const [saveState, setSaveState] = useState<"idle" | "saving" | "saved">("idle");
+  /** Ada perubahan yang belum sampai ke presets.json. */
+  const pending = useRef(false);
 
+  // Ganti preset yang diedit: mulai dari isinya. Preset yang sama berubah dari luar
+  // (misalnya mode diganti di panel): ambil perubahannya kalau tidak ada yang tertunda.
+  const lastId = useRef(preset.id);
   useEffect(() => {
-    setDraft(preset);
-    setConfirmDelete(false);
-    setError(null);
+    if (preset.id !== lastId.current) {
+      lastId.current = preset.id;
+      pending.current = false;
+      setDraft(preset);
+      setConfirmDelete(false);
+      setError(null);
+      setSaveState("idle");
+    } else if (!pending.current) {
+      // Pertahankan spasi di akhir nama yang sedang diketik.
+      setDraft((d) => ({ ...preset, name: d.name.trim() === preset.name ? d.name : preset.name }));
+    }
   }, [preset]);
 
   const sorted = useMemo(() => draft.apps.slice().sort((a, b) => a.order - b.order), [draft.apps]);
-  const dirty = isNew || JSON.stringify(draft) !== JSON.stringify(preset);
+  const changed = JSON.stringify({ ...draft, name: draft.name.trim() }) !== JSON.stringify(preset);
+
+  // Simpan otomatis setiap perubahan pada preset yang sudah ada, supaya saklar
+  // "Buka otomatis" dan urutan app langsung berlaku tanpa tombol Simpan.
+  useEffect(() => {
+    if (isNew || !changed || !draft.name.trim()) return;
+    pending.current = true;
+    setSaveState("saving");
+    const timer = setTimeout(async () => {
+      try {
+        const list = await api.savePreset(draft);
+        pending.current = false;
+        setError(null);
+        setSaveState("saved");
+        onSaved(list, draft.id);
+      } catch (e) {
+        pending.current = false;
+        setSaveState("idle");
+        setError(errorMessage(e));
+      }
+    }, 350);
+    return () => clearTimeout(timer);
+  }, [draft]);
 
   const setApps = (list: typeof sorted) =>
     setDraft((d) => ({ ...d, apps: list.map((a, i) => ({ ...a, order: i + 1 })) }));
@@ -46,7 +82,8 @@ export function PresetEditor({ preset, isNew, byId, apps, known, onSaved, onDele
     setApps(reorder(sorted, from, to));
   };
 
-  const save = async () => {
+  /** Hanya untuk preset baru; preset yang sudah ada tersimpan otomatis. */
+  const create = async () => {
     setError(null);
     try {
       const list = await api.savePreset(draft);
@@ -92,7 +129,7 @@ export function PresetEditor({ preset, isNew, byId, apps, known, onSaved, onDele
         {draft.mode === "clean"
           ? "Menutup app di luar preset, mengganti isi dock, lalu membuka app yang ditandai buka otomatis."
           : draft.mode === "brutal"
-            ? "Menutup semua app, termasuk browser dan app di preset, lalu membukanya ulang dari awal tanpa jendela dan tab lama. Docky, Finder, app menu bar, dan Pengecualian dibiarkan. App dengan pekerjaan belum disimpan tidak dipaksa tutup."
+            ? "Menutup semua app, termasuk browser dan app di preset, lalu membuka ulang dari awal (tanpa jendela dan tab lama) hanya app yang buka otomatis-nya menyala. Docky, Finder, app menu bar, dan Pengecualian dibiarkan. App dengan pekerjaan belum disimpan tidak dipaksa tutup."
             : "Hanya mengganti isi dock. Tidak ada app yang ditutup atau dibuka."}
       </p>
 
@@ -198,9 +235,15 @@ export function PresetEditor({ preset, isNew, byId, apps, known, onSaved, onDele
             Hapus preset
           </button>
         )}
-        <button className="pill primary" onClick={save} disabled={!dirty || !draft.name.trim()}>
-          Simpan
-        </button>
+        {isNew ? (
+          <button className="pill primary" onClick={create} disabled={!draft.name.trim()}>
+            Buat preset
+          </button>
+        ) : (
+          <span className="small muted save-state" aria-live="polite">
+            {!draft.name.trim() ? "Isi nama supaya tersimpan" : saveState === "saving" ? "Menyimpan…" : "Tersimpan otomatis"}
+          </span>
+        )}
       </div>
 
       {picking && (

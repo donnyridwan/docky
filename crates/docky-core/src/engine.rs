@@ -317,7 +317,7 @@ impl<A: AppController, D: DockManager> Engine<A, D> {
             let running_now = self.apps.running_apps();
             let brutal = preset.mode == PresetMode::Brutal;
             let to_open = if brutal {
-                plan::apps_to_reopen(preset, &running, &running_now)
+                plan::apps_to_reopen(preset, &running_now)
             } else {
                 plan::apps_to_open(preset, &running_now)
             };
@@ -521,16 +521,18 @@ mod tests {
         assert_eq!(summary.closed, vec!["Figma", "Safari", "Music", "Notion"]);
         assert!(s.apps.is_running("com.apple.finder"));
         assert!(s.apps.is_running("com.example.menubar"));
-        // Dibuka ulang dari awal: buka otomatis + yang tadi terbuka (Notion), urut dock.
-        assert_eq!(summary.opened, vec!["Claude", "Figma", "Slack", "Notion"]);
+        // Dibuka ulang dari awal hanya yang "buka otomatis"-nya menyala, urut dock.
+        // Notion (saklar mati) tetap tertutup walaupun tadi terbuka.
+        assert_eq!(summary.opened, vec!["Claude", "Figma", "Slack"]);
         assert_eq!(
             s.apps.fresh_open_calls(),
-            vec!["com.anthropic.claudefordesktop", "com.figma.Desktop", "com.tinyspeck.slackmacgap", "notion.id"]
+            vec!["com.anthropic.claudefordesktop", "com.figma.Desktop", "com.tinyspeck.slackmacgap"]
         );
+        assert!(!s.apps.is_running("notion.id"));
         assert!(s.apps.open_calls().iter().all(|id| s.apps.fresh_open_calls().contains(id)));
         let done: Vec<_> = events.iter().filter(|e| e.status == StepStatus::Done).map(|e| e.step.number()).collect();
         assert_eq!(done, vec![1, 2, 3, 4, 5]);
-        assert_eq!(summary.sentence(), "4 app ditutup, 4 dibuka ulang dari awal.");
+        assert_eq!(summary.sentence(), "4 app ditutup, 3 dibuka ulang dari awal.");
     }
 
     #[test]
