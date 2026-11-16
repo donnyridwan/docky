@@ -397,6 +397,12 @@ input {
   display: none;
 }
 
+/* Saat menyeret, ikon yang terangkat dan bayangannya boleh keluar dari rak
+   (overflow-x: auto ikut memotong arah vertikal). */
+.shelf.dragging {
+  overflow: visible;
+}
+
 .shelf-item {
   display: flex;
   flex-direction: column;
