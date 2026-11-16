@@ -246,12 +246,37 @@ export function Panel() {
           if (!(e.target as HTMLElement).closest("button")) api.resetPanelPosition().catch(() => {});
         }}
       >
-        <button className="icon-btn" onClick={() => api.hidePanel()} aria-label="Tutup panel" title="Tutup">
-          <Icon name="close" dim />
-        </button>
-        <Icon name="dock" className="logo" />
-        <span className="panel-title">Docky</span>
+        <div className="header-lead">
+          <button className="icon-btn" onClick={() => api.hidePanel()} aria-label="Tutup panel" title="Tutup">
+            <Icon name="close" dim />
+          </button>
+          <Icon name="dock" className="logo" />
+        </div>
+        <div className="tabs" role="tablist" aria-label="Preset">
+          {presets.map((p) => {
+            const active = p.id === selected?.id;
+            return (
+              <button
+                key={p.id}
+                className={`tab${active ? " active" : ""}`}
+                role="tab"
+                aria-selected={active}
+                onClick={() => select(p)}
+                onDoubleClick={() => api.openSettings()}
+                disabled={busy && !active}
+                title={`${p.name} · ${MODE_LABEL[p.mode]}`}
+              >
+                <span className={`tab-dot ${p.mode}`} aria-hidden />
+                <span className="tab-name">{p.name}</span>
+              </button>
+            );
+          })}
+          <button className="tab-new" onClick={newPreset} disabled={busy} aria-label="Preset baru dari kondisi sekarang" title="Preset baru dari kondisi sekarang">
+            <Icon name="plus" />
+          </button>
+        </div>
         <span className="spacer" />
+        <div className="header-trail">
         {update.state === "ready" && (
           <button className="update-pill" onClick={installUpdate} disabled={busy} title={`Pasang Docky ${update.version} lalu buka ulang`}>
             Restart untuk update
@@ -297,6 +322,7 @@ export function Panel() {
               </button>
             </div>
           )}
+        </div>
         </div>
       </header>
 
@@ -425,29 +451,6 @@ export function Panel() {
       )}
 
       <footer className="panel-footer">
-        <button className="round" onClick={newPreset} disabled={busy} aria-label="Preset baru dari kondisi sekarang" title="Preset baru dari kondisi sekarang">
-          <Icon name="plus" />
-        </button>
-        <div className="chips" role="radiogroup" aria-label="Preset">
-          {presets.map((p) => {
-            const active = p.id === selected?.id;
-            return (
-              <button
-                key={p.id}
-                className={`chip${active ? " active" : ""}`}
-                role="radio"
-                aria-checked={active}
-                onClick={() => select(p)}
-                onDoubleClick={() => api.openSettings()}
-                disabled={busy && !active}
-                title={`${p.name} · ${MODE_LABEL[p.mode]}`}
-              >
-                <Icon name={active ? "check" : "layers"} />
-                <span>{p.name}</span>
-              </button>
-            );
-          })}
-        </div>
         <span className="spacer" />
         <button className="pill" onClick={undo} disabled={busy || !status?.can_undo} title="Batalkan preset terakhir">
           <Icon name="undo" />
