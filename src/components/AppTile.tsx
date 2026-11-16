@@ -1,6 +1,6 @@
 import type { InstalledApp } from "../api";
 
-// Warna cadangan kalau ikon app belum ada, diambil dari tile contoh di Figma.
+// Warna cadangan kalau ikon app belum ada.
 const TILE_COLORS = ["#c96a4a", "#a259ff", "#7c3a85", "#5d5d5d", "#5e6ad2", "#2f6fed", "#3b8a6e", "#b5832f"];
 
 function colorFor(name: string): string {
@@ -18,9 +18,10 @@ interface Props {
   title?: string;
 }
 
+/** Kotak ikon app (tanpa nama). */
 export function AppTile({ name, installed, known, size = 40, title }: Props) {
   const missing = known && !installed;
-  const style = { width: size, height: size, fontSize: size * 0.4375 };
+  const style = { width: size, height: size, fontSize: size * 0.42, borderRadius: size * 0.23 };
   return (
     <div
       className={`tile${installed?.icon ? " has-icon" : ""}${missing ? " missing" : ""}`}

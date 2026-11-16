@@ -1,4 +1,4 @@
-/* Panel mengambang: Variasi B · Panel bawah, gaya Skala (Figma node 32:221). */
+/* Panel mengambang. Desain: Figma "Docky UI" › 3 · Panel — semua state (P1–P13). */
 
 html,
 body {
@@ -12,23 +12,25 @@ body {
   flex-direction: column;
   width: 720px;
   /* Sedikit tembus pandang supaya efek blur macOS di belakang jendela terasa. */
-  background: color-mix(in srgb, var(--panel) 94%, transparent);
-  border: 1px solid var(--outline);
+  background: color-mix(in srgb, var(--bg-panel) 97%, transparent);
+  border: 1px solid var(--stroke-outline);
   border-radius: var(--radius-panel);
   overflow: visible;
 }
 
+/* ---- Header ------------------------------------------------------- */
+
 .panel-header {
   display: flex;
   align-items: center;
-  gap: 12px;
-  height: 30px;
+  gap: 10px;
+  height: 34px;
   padding: 0 12px;
-  background: var(--header);
-  border-bottom: 1px solid var(--outline);
+  background: var(--bg-header);
+  border-bottom: 1px solid var(--stroke-outline);
   border-radius: calc(var(--radius-panel) - 1px) calc(var(--radius-panel) - 1px) 0 0;
   flex-shrink: 0;
-  /* Header jadi pegangan untuk menyeret panel. */
+  /* Bagian kosong header = pegangan untuk menyeret panel. */
   cursor: grab;
 }
 
@@ -36,27 +38,15 @@ body {
   cursor: default;
 }
 
+.panel-header .logo {
+  opacity: 0.9;
+}
+
 .panel-title {
   font-size: 12px;
-  font-weight: 500;
+  font-weight: 600;
   color: var(--text-muted);
   white-space: nowrap;
-}
-
-.spacer {
-  flex: 1 0 0;
-  min-width: 1px;
-}
-
-.icon-btn {
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  border-radius: 4px;
-}
-
-.icon-btn:hover .icon {
-  opacity: 1;
 }
 
 .icon.flipped {
@@ -69,20 +59,18 @@ body {
 }
 
 .header-menu {
-  top: 22px;
+  top: 24px;
   right: -4px;
 }
 
-/* Tombol update di header, muncul saat update sudah diunduh. */
 .update-pill {
   display: inline-flex;
   align-items: center;
   gap: 4px;
   height: 20px;
-  padding: 0 10px;
+  padding: 0 8px 0 10px;
   border-radius: 10px;
   background: var(--blue);
-  color: var(--text);
   font-size: 11px;
   font-weight: 600;
   white-space: nowrap;
@@ -92,27 +80,26 @@ body {
   background: #3b7af0;
 }
 
-/* ---- Area isi dock ----------------------------------------------- */
+/* ---- Area isi dock ------------------------------------------------ */
 
 .panel-body {
-  padding: 8px 8px 0;
+  padding: 10px 10px 0;
 }
 
 .field {
   position: relative;
   display: flex;
   align-items: flex-start;
-  gap: 10px;
-  min-height: 64px;
-  padding: 12px 14px 12px 12px;
-  background: var(--field);
+  gap: 6px;
+  min-height: 102px;
+  padding: 14px 14px 12px;
+  background: var(--bg-field);
   border-radius: var(--radius-field);
 }
 
 .dock-apps {
   display: flex;
-  align-items: center;
-  gap: 12px;
+  gap: 6px;
   min-width: 0;
   overflow-x: auto;
   scrollbar-width: none;
@@ -122,100 +109,198 @@ body {
   display: none;
 }
 
-.add-tile {
-  border: 1px dashed var(--chip-stroke);
-  background: transparent;
-}
-
-.add-tile .add-icon {
-  opacity: 0.8;
-}
-
-.add-tile:hover {
-  background: var(--hover);
-}
-
-.mode {
-  position: relative;
+/* App tile: ikon 52 px, titik buka otomatis, nama di bawah (komponen "App tile"). */
+.dock-app {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 4px;
+  width: 64px;
   flex-shrink: 0;
 }
 
-.mode-btn {
-  display: flex;
-  align-items: center;
-  gap: 8px;
-  font-size: 14px;
-  white-space: nowrap;
-  border-radius: 6px;
+.dock-app-icon {
+  position: relative;
 }
 
-.mode-btn:hover .icon.dim {
-  opacity: 1;
+.dock-app .badge {
+  position: absolute;
+  top: -4px;
+  right: -6px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 18px;
+  height: 18px;
+  border-radius: 9px;
+  background: var(--warning);
+  color: var(--bg-header);
+}
+
+.auto-dot {
+  width: 4px;
+  height: 4px;
+  border-radius: 2px;
+}
+
+.auto-dot.on {
+  background: rgba(255, 255, 255, 0.85);
+}
+
+.dock-app-name {
+  width: 100%;
+  font-size: 11px;
+  font-weight: 500;
+  text-align: center;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.dock-app.missing .dock-app-name,
+.dock-app.add .dock-app-name {
+  color: var(--text-muted);
+}
+
+.add-box {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border: 1.25px dashed var(--stroke-chip);
+  border-radius: var(--radius-tile);
+}
+
+.add-box .icon {
+  opacity: 0.8;
+}
+
+.dock-app.add:hover .add-box {
+  background: var(--bg-hover);
+}
+
+/* Pilihan mode (komponen "Pilihan mode"). */
+.mode {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+  gap: 6px;
+  flex-shrink: 0;
+}
+
+.mode-pill {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  height: 28px;
+  padding: 0 8px 0 10px;
+  border-radius: 14px;
+  background: var(--bg-control);
+  font-size: 13px;
+  font-weight: 500;
+  white-space: nowrap;
+}
+
+.mode-pill:hover {
+  background: #44444b;
+}
+
+.mode-pill.brutal {
+  background: rgba(242, 106, 46, 0.16);
+  border: 1px solid rgba(242, 106, 46, 0.6);
+  color: var(--brutal);
+}
+
+.mode-pill.brutal .icon.dim {
+  color: var(--text);
+}
+
+.mode-hint {
+  font-size: 11px;
+  color: var(--text-muted);
+  white-space: nowrap;
 }
 
 .mode-menu {
-  top: 24px;
-  right: -6px;
+  top: 32px;
+  right: 0;
 }
 
-.mode-menu small {
-  display: block;
-  font-size: 11px;
+/* Pesan (selamat datang, kosong, konfirmasi) — P9, P10, P11. */
+.message {
+  display: flex;
+  align-items: flex-start;
+  gap: 12px;
+  width: 100%;
+}
+
+.message-icon.warning {
+  color: var(--warning);
+}
+
+.message-icon.muted {
   color: var(--text-muted);
-  margin-top: 1px;
 }
 
-.mode-menu button:hover small {
-  color: rgba(255, 255, 255, 0.8);
-}
-
-.field-text {
+.message-text {
   flex: 1;
   min-width: 0;
-  padding-right: 24px;
 }
 
-.field-title {
+.message-title {
   font-size: 14px;
-  font-weight: 500;
+  font-weight: 600;
 }
 
-.field-text p {
+.message-text p {
   margin: 4px 0 0;
   font-size: 13px;
   line-height: 1.4;
   color: var(--text-muted);
 }
 
-.field-text p b {
-  color: var(--text);
-  font-weight: 500;
-}
-
-.field-actions {
+.message-actions {
   display: flex;
   gap: 8px;
-  margin-top: 10px;
+  margin-top: 12px;
 }
 
-.field-actions .pill {
-  height: 28px;
+.loading {
+  margin: 0;
   font-size: 13px;
-  padding: 0 12px;
 }
 
+/* Progres (P6, P7). */
+.run {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  width: 100%;
+}
+
+.run-title {
+  display: flex;
+  align-items: baseline;
+  gap: 6px;
+  font-size: 14px;
+  font-weight: 600;
+}
+
+.run-title .muted {
+  font-size: 13px;
+  font-weight: 400;
+}
 
 .steps {
   display: flex;
   gap: 4px;
-  margin-top: 10px;
 }
 
 .steps span {
   flex: 1;
   height: 4px;
   border-radius: 2px;
-  background: var(--chip-stroke);
+  background: var(--stroke-chip);
 }
 
 .steps span.done {
@@ -223,9 +308,42 @@ body {
 }
 
 .steps span.current {
-  background: linear-gradient(90deg, var(--blue), var(--chip-stroke));
+  background: linear-gradient(90deg, var(--blue), var(--stroke-chip));
   background-size: 200% 100%;
   animation: progress 1.2s linear infinite;
+}
+
+.run.brutal .steps span.done {
+  background: var(--brutal);
+}
+
+.run.brutal .steps span.current {
+  background-image: linear-gradient(90deg, var(--brutal), var(--stroke-chip));
+}
+
+.step-names {
+  display: flex;
+  gap: 4px;
+}
+
+.step-names span {
+  flex: 1;
+  font-size: 11px;
+  color: var(--text-subtle);
+}
+
+.step-names span.past {
+  color: var(--text);
+}
+
+.step-names span.now {
+  color: var(--text);
+  font-weight: 600;
+}
+
+.run-detail {
+  margin: 0;
+  font-size: 12px;
 }
 
 @keyframes progress {
@@ -237,13 +355,13 @@ body {
   }
 }
 
-/* ---- Baris bawah --------------------------------------------------- */
+/* ---- Baris bawah -------------------------------------------------- */
 
 .panel-footer {
   display: flex;
   align-items: center;
   gap: 8px;
-  padding: 8px;
+  padding: 10px;
 }
 
 .chips {

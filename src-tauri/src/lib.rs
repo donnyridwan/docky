@@ -349,8 +349,8 @@ fn show_settings(app: &AppHandle) -> tauri::Result<()> {
     }
     let win = WebviewWindowBuilder::new(app, SETTINGS, WebviewUrl::App("settings.html".into()))
         .title("Pengaturan Docky")
-        .inner_size(760.0, 560.0)
-        .min_inner_size(640.0, 460.0)
+        .inner_size(880.0, 760.0)
+        .min_inner_size(780.0, 600.0)
         .theme(Some(tauri::Theme::Dark))
         .center()
         .build()?;

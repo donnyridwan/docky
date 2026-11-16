@@ -84,10 +84,18 @@ export type UpdateStatus =
   | { state: "error"; message: string };
 
 /** Urutan mode di menu, dengan penjelasan singkat. */
-export const MODES: { mode: PresetMode; hint: string }[] = [
-  { mode: "clean", hint: "Tutup app di luar preset, ganti dock, buka app" },
-  { mode: "brutal", hint: "Tutup semua app, ganti dock, buka ulang dari awal" },
-  { mode: "dock_only", hint: "Hanya ganti isi dock" },
+export const MODES: { mode: PresetMode; short: string; hint: string }[] = [
+  {
+    mode: "clean",
+    short: "Tutup app di luar preset",
+    hint: "Tutup app di luar preset, ganti dock, lalu buka app yang buka otomatis.",
+  },
+  {
+    mode: "brutal",
+    short: "Tutup semua app, buka ulang dari awal",
+    hint: "Tutup semua app termasuk browser, lalu buka ulang dari awal hanya yang buka otomatis.",
+  },
+  { mode: "dock_only", short: "Hanya ganti isi dock", hint: "Hanya ganti isi dock. Tidak ada app yang ditutup atau dibuka." },
 ];
 
 export const MODE_LABEL: Record<PresetMode, string> = {

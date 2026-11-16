@@ -1,6 +1,7 @@
 import { useEffect, useMemo, useRef, useState } from "react";
 import type { InstalledApp } from "../api";
 import { AppTile } from "../components/AppTile";
+import { Icon } from "../components/Icon";
 
 interface Props {
   apps: InstalledApp[];
@@ -27,17 +28,19 @@ export function AppPicker({ apps, exclude, title, onPick, onClose }: Props) {
     <div className="picker-backdrop" onMouseDown={(e) => e.target === e.currentTarget && onClose()}>
       <div className="picker" role="dialog" aria-label={title} onKeyDown={(e) => e.key === "Escape" && onClose()}>
         <div className="picker-head">
-          <span>{title}</span>
-          <input
-            ref={inputRef}
-            className="text-input"
-            placeholder="Cari app"
-            value={query}
-            onChange={(e) => setQuery(e.target.value)}
-            onKeyDown={(e) => {
-              if (e.key === "Enter" && list[0]) onPick(list[0]);
-            }}
-          />
+          <span className="picker-title">{title}</span>
+          <label className="search">
+            <Icon name="search" dim />
+            <input
+              ref={inputRef}
+              placeholder="Cari app"
+              value={query}
+              onChange={(e) => setQuery(e.target.value)}
+              onKeyDown={(e) => {
+                if (e.key === "Enter" && list[0]) onPick(list[0]);
+              }}
+            />
+          </label>
         </div>
         <ul className="picker-list">
           {list.map((a) => (
@@ -45,14 +48,16 @@ export function AppPicker({ apps, exclude, title, onPick, onClose }: Props) {
               <button onClick={() => onPick(a)}>
                 <AppTile name={a.name} installed={a} known size={24} />
                 <span className="grow">{a.name}</span>
-                <span className="muted small">{a.bundle_id}</span>
+                <span className="subtle small bundle">{a.bundle_id}</span>
               </button>
             </li>
           ))}
           {list.length === 0 && <li className="muted empty">Tidak ada app yang cocok.</li>}
         </ul>
         <div className="picker-foot">
-          <button className="pill" onClick={onClose}>
+          <span className="subtle small">Enter = tambah hasil pertama · Esc = tutup</span>
+          <span className="grow" />
+          <button className="pill primary no-icon" onClick={onClose}>
             Selesai
           </button>
         </div>

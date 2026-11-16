@@ -1,27 +1,28 @@
-/* Token warna gaya "Skala" dari file Figma Docky (Variasi B · Panel bawah). */
+/* Token warna dari file Figma "Docky UI" (koleksi variable "Docky", mode Gelap). */
 :root {
-  --panel: #2d2d2d;
-  --header: #232323;
-  --field: #3b3b3b;
-  --control: #474747;
-  --chip: #343434;
-  --chip-stroke: #5d5d5d;
-  --outline: #101010;
+  --bg-panel: #1e1e21;
+  --bg-header: #17171a;
+  --bg-field: #2a2a2e;
+  --bg-control: #3a3a40;
+  --bg-chip: #26262a;
+  --bg-hover: #33333a;
+  --stroke-chip: #4a4a52;
+  --stroke-outline: #0b0b0d;
+  --stroke-divider: #34343a;
   --text: #ffffff;
-  --text-muted: #a3a3a3;
+  --text-muted: #a1a1aa;
+  --text-subtle: #6e6e78;
   --blue: #2f6fed;
-
-  /* Turunan untuk keadaan interaktif, bukan dari Figma. */
-  --round-stroke: #444444;
-  --hover: rgba(255, 255, 255, 0.06);
-  --danger: #e5484d;
-  --warning: #f5a524;
+  --brutal: #f26a2e;
+  --success: #34c759;
+  --warning: #ffb020;
+  --danger: #ff4d4f;
   --focus: rgba(47, 111, 237, 0.65);
 
-  --radius-panel: 16px;
-  --radius-field: 8px;
-  --radius-tile: 10px;
-  --radius-pill: 18px;
+  --radius-panel: 18px;
+  --radius-field: 12px;
+  --radius-tile: 12px;
+  --radius-pill: 16px;
 
   color-scheme: dark;
   font-family: "Archivo Variable", "Archivo", -apple-system, BlinkMacSystemFont, sans-serif;
@@ -63,7 +64,7 @@ input:focus-visible,
 }
 
 button:disabled {
-  opacity: 0.45;
+  opacity: 0.4;
 }
 
 input {
@@ -71,15 +72,21 @@ input {
   color: inherit;
 }
 
+/* Ikon mask: warnanya mengikuti `color`. */
 .icon {
-  display: block;
-  width: 16px;
-  height: 16px;
+  display: inline-block;
   flex-shrink: 0;
+  background-color: currentColor;
+  -webkit-mask-repeat: no-repeat;
+  mask-repeat: no-repeat;
+  -webkit-mask-position: center;
+  mask-position: center;
+  -webkit-mask-size: contain;
+  mask-size: contain;
 }
 
 .icon.dim {
-  opacity: 0.7;
+  opacity: 0.6;
 }
 
 .sr-only {
@@ -91,79 +98,136 @@ input {
   white-space: nowrap;
 }
 
-/* ---- Komponen bersama ---------------------------------------------- */
+.muted {
+  color: var(--text-muted);
+}
+
+.subtle {
+  color: var(--text-subtle);
+}
+
+.spacer {
+  flex: 1 0 0;
+  min-width: 1px;
+}
+
+/* ---- Tombol (komponen "Tombol" di Figma) -------------------------- */
 
 .pill {
   display: inline-flex;
   align-items: center;
+  justify-content: center;
   gap: 8px;
   height: 32px;
   padding: 0 14px 0 12px;
   border-radius: var(--radius-pill);
-  background: var(--chip);
-  border: 1px solid var(--chip-stroke);
+  background: var(--bg-chip);
+  border: 1px solid var(--stroke-chip);
   white-space: nowrap;
   font-size: 14px;
   flex-shrink: 0;
 }
 
-.pill:not(:disabled):hover {
-  background: #3a3a3a;
+.pill.no-icon {
+  padding: 0 14px;
 }
 
-.pill.active {
-  background: var(--control);
+.pill:not(:disabled):hover {
+  background: var(--bg-hover);
+}
+
+.pill.primary,
+.pill.brutal,
+.pill.danger {
   border-color: transparent;
+  font-weight: 600;
 }
 
 .pill.primary {
   background: var(--blue);
-  border-color: transparent;
 }
 
 .pill.primary:not(:disabled):hover {
   background: #3b7af0;
 }
 
-.pill.danger {
-  background: var(--danger);
-  border-color: transparent;
+.pill.brutal {
+  background: var(--brutal);
 }
 
+.pill.brutal:not(:disabled):hover {
+  background: #f47a43;
+}
+
+.pill.danger {
+  background: var(--danger);
+}
+
+.pill.full {
+  width: 100%;
+}
+
+/* Chip preset (komponen "Chip preset"). */
+.chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  height: 32px;
+  padding: 0 14px 0 12px;
+  border-radius: var(--radius-pill);
+  background: var(--bg-chip);
+  border: 1px solid var(--stroke-chip);
+  white-space: nowrap;
+  font-size: 14px;
+  flex-shrink: 0;
+}
+
+.chip:not(:disabled):hover {
+  background: var(--bg-hover);
+}
+
+.chip.active {
+  background: var(--bg-control);
+  border-color: transparent;
+  font-weight: 500;
+}
+
+/* Tombol bulat (komponen "Tombol bulat"). */
 .round {
   display: inline-flex;
   align-items: center;
   justify-content: center;
   width: 32px;
   height: 32px;
-  border-radius: var(--radius-pill);
-  border: 1px solid var(--round-stroke);
+  border-radius: 16px;
+  border: 1px solid var(--stroke-chip);
   flex-shrink: 0;
 }
 
 .round:not(:disabled):hover {
-  background: var(--hover);
+  background: var(--bg-hover);
 }
 
-.round.blue {
-  background: var(--blue);
-  border-color: transparent;
+.icon-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 4px;
 }
 
-.round.blue:not(:disabled):hover {
-  background: #3b7af0;
+.icon-btn:hover .icon {
+  opacity: 1;
 }
+
+/* ---- App tile ------------------------------------------------------ */
 
 .tile {
   position: relative;
   display: flex;
   align-items: center;
   justify-content: center;
-  width: 40px;
-  height: 40px;
   border-radius: var(--radius-tile);
   font-weight: 600;
-  font-size: 17.5px;
   flex-shrink: 0;
   overflow: hidden;
 }
@@ -191,51 +255,14 @@ input {
   opacity: 0.35;
 }
 
-.menu {
-  position: absolute;
-  z-index: 10;
-  min-width: 180px;
-  padding: 4px;
-  background: var(--header);
-  border: 1px solid var(--outline);
-  border-radius: 10px;
-  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.45);
-}
-
-.menu button {
-  display: flex;
-  align-items: center;
-  gap: 8px;
-  width: 100%;
-  padding: 6px 10px;
-  border-radius: 6px;
-  text-align: left;
-  font-size: 13px;
-  white-space: nowrap;
-}
-
-.menu button:hover,
-.menu button:focus-visible {
-  background: var(--blue);
-  outline: none;
-}
-
-.menu hr {
-  border: none;
-  border-top: 1px solid #3a3a3a;
-  margin: 4px 6px;
-}
-
-.menu .check {
-  width: 16px;
-}
+/* ---- Saklar -------------------------------------------------------- */
 
 .switch {
   position: relative;
   width: 32px;
   height: 18px;
   border-radius: 9px;
-  background: var(--chip-stroke);
+  background: var(--stroke-chip);
   flex-shrink: 0;
   transition: background 0.15s;
 }
@@ -260,6 +287,55 @@ input {
   transform: translateX(14px);
 }
 
-.muted {
+/* ---- Menu (cadangan HTML untuk pratinjau di browser) ---------------- */
+
+.menu {
+  position: absolute;
+  z-index: 10;
+  min-width: 220px;
+  padding: 5px;
+  background: rgba(42, 42, 46, 0.96);
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  border-radius: 8px;
+  box-shadow: 0 10px 28px rgba(0, 0, 0, 0.5);
+}
+
+.menu button {
+  display: flex;
+  align-items: flex-start;
+  gap: 6px;
+  width: 100%;
+  padding: 5px 12px 5px 8px;
+  border-radius: 6px;
+  text-align: left;
+  font-size: 13px;
+  white-space: nowrap;
+}
+
+.menu button:hover,
+.menu button:focus-visible {
+  background: var(--blue);
+  outline: none;
+}
+
+.menu hr {
+  border: none;
+  border-top: 1px solid rgba(255, 255, 255, 0.12);
+  margin: 5px 6px;
+}
+
+.menu .check {
+  width: 16px;
+  display: inline-flex;
+}
+
+.menu small {
+  display: block;
+  font-size: 11px;
   color: var(--text-muted);
+  margin-top: 2px;
+}
+
+.menu button:hover small {
+  color: rgba(255, 255, 255, 0.85);
 }

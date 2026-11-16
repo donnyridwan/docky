@@ -149,8 +149,8 @@ src-tauri/             App Tauri
   src/lib.rs           Tauri command, ikon menu bar, jendela panel dan Pengaturan
   src/platform/        AppController (NSRunningApplication), DockManager, ikon app (NSWorkspace)
 src/                   Tampilan React + TypeScript
-  panel/               Panel mengambang (Figma: Variasi B · Panel bawah, gaya Skala)
-  settings/            Jendela Pengaturan: editor preset, pengecualian, umum
+  panel/               Panel mengambang (Figma "Docky UI" › 3 · Panel, state P1–P13)
+  settings/            Jendela Pengaturan (Figma "Docky UI" › 5 · Pengaturan, state S1–S13)
   assets/icons/        Ikon 16 px dari Figma
 ```
 
