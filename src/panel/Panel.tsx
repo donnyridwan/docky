@@ -385,23 +385,6 @@ export function Panel() {
             <button className="light red" onClick={() => api.hidePanel()} aria-label="Tutup panel" title="Tutup">
               <Glyph d="M2.5 2.5l5 5M7.5 2.5l-5 5" />
             </button>
-            <button
-              className="light yellow"
-              onClick={() => setCollapsed((c) => !c)}
-              aria-label={collapsed ? "Bentangkan" : "Ciutkan"}
-              aria-expanded={!collapsed}
-              title={collapsed ? "Bentangkan" : "Ciutkan"}
-            >
-              <Glyph d="M2 5h6" />
-            </button>
-            <button
-              className="light green"
-              onClick={() => api.resetPanelPosition()}
-              aria-label="Kembalikan panel ke tengah"
-              title="Kembalikan ke tengah"
-            >
-              <Glyph d="M5 2v6M2 5h6" />
-            </button>
           </div>
           <PresetTabs
             presets={presets}

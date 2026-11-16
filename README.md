@@ -8,7 +8,7 @@ Gratis dan open source (MIT), dibagikan di luar Mac App Store karena App Store t
 
 ## Cara kerja
 
-Docky berjalan tanpa ikon di dock. Klik ikon Docky di menu bar untuk membuka panel di tengah layar (layar tempat kursor berada). Panel bisa diseret dari strip tab; klik dua kali strip atau lampu hijau untuk mengembalikannya ke tengah.
+Docky berjalan tanpa ikon di dock. Klik ikon Docky di menu bar untuk membuka panel di tengah layar (layar tempat kursor berada). Panel bisa diseret dari strip tab; klik dua kali strip atau pilih "Kembalikan panel ke tengah" di menu ⋯ untuk mengembalikannya ke tengah. Tombol merah di kiri atas menutup panel.
 
 - **Tab preset** di atas, seperti folder di Chrome, memilih preset. Titik di tab menunjukkan modenya (biru Bersih total, oranye Bersih brutal, abu-abu Ganti dock saja). Tombol **+** di ujung tab membuat preset kosong atau preset dari kondisi sekarang: app yang sedang terbuka ditandai "buka otomatis", app yang hanya ada di dock ditandai tidak.
 - **Rak dock** menampilkan app di preset sesuai urutannya, tanpa nama. Titik di bawah ikon = dibuka otomatis, garis = pemisah. Klik ikon untuk menyalakan/mematikan "buka otomatis" atau menghapusnya. Kotak **+** membuka popover Tambah app: daftar app, **Tambah pemisah**, lalu kolom cari dan **Telusuri…** paling bawah, dekat tombolnya.
