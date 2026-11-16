@@ -135,7 +135,7 @@ export function PresetEditor({ preset, installed, container, onSaved, onDeleted 
         </label>
       </div>
 
-      <Shelf apps={sorted} byId={byId} known={known} onAdd={openAdd} addOpen={adding && addAnchor?.classList.contains("shelf-add")} onItem={openItemMenu} />
+      <Shelf apps={sorted} byId={byId} known={known} onAdd={openAdd} addOpen={adding && addAnchor?.classList.contains("shelf-add")} onItem={openItemMenu} onReorder={move} />
 
       <section className="section">
         <div className="section-head">

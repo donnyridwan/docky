@@ -488,6 +488,9 @@ fn show_settings(app: &AppHandle) -> tauri::Result<()> {
         .min_inner_size(780.0, 600.0)
         .theme(Some(tauri::Theme::Light))
         .transparent(true)
+        // Seret-ubah-urutan di daftar app memakai drag-and-drop HTML; tanpa ini
+        // Tauri menangkapnya sebagai seret-file.
+        .disable_drag_drop_handler()
         .effects(EffectsBuilder::new().effect(Effect::Sidebar).state(EffectState::Active).build())
         .center();
     #[cfg(target_os = "macos")]

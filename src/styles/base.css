@@ -403,8 +403,30 @@ input {
   align-items: center;
   gap: 4px;
   flex-shrink: 0;
-  /* Masuk saat preset diganti atau app ditambahkan. */
-  animation: pop-in 220ms var(--ease-out) both;
+  /* Masuk saat preset diganti atau app ditambahkan. "backwards" supaya
+     setelah selesai animasi tidak menahan transform (dipakai saat menyeret). */
+  animation: pop-in 220ms var(--ease-out) backwards;
+}
+
+/* Seret untuk mengubah urutan: ikon lain bergeser memberi tempat. */
+.shelf.sortable .shelf-item,
+.shelf.sortable .shelf-divider-hit {
+  position: relative;
+  touch-action: none;
+  transition: transform 200ms var(--ease-out);
+}
+
+.shelf .shelf-item.lifted .tile {
+  transform: scale(1.08);
+  box-shadow: 0 8px 18px rgba(0, 0, 0, 0.22);
+}
+
+.shelf .shelf-item.lifted .tile.has-icon {
+  filter: drop-shadow(0 6px 10px rgba(0, 0, 0, 0.2));
+}
+
+.shelf-divider-hit.lifted .shelf-divider {
+  background: var(--blue);
 }
 
 .shelf-item .tile {
@@ -443,7 +465,7 @@ input {
   margin: 0 -3px;
   border-radius: 4px;
   flex-shrink: 0;
-  animation: pop-in 220ms var(--ease-out) both;
+  animation: pop-in 220ms var(--ease-out) backwards;
 }
 
 .shelf-divider {

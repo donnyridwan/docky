@@ -840,7 +840,7 @@ dependencies = [
 
 [[package]]
 name = "docky"
-version = "0.1.10"
+version = "0.1.12"
 dependencies = [
  "base64 0.22.1",
  "docky-core",
@@ -859,7 +859,7 @@ dependencies = [
 
 [[package]]
 name = "docky-core"
-version = "0.1.10"
+version = "0.1.12"
 dependencies = [
  "plist",
  "serde",

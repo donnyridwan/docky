@@ -186,6 +186,14 @@ export function Panel() {
     if (selected) savePreset({ ...selected, apps: renumber(ordered.filter((a) => a.bundle_id !== app.bundle_id)) });
   };
 
+  const reorderApps = (from: number, to: number) => {
+    if (!selected) return;
+    const list = ordered.slice();
+    const [moved] = list.splice(from, 1);
+    list.splice(to, 0, moved);
+    savePreset({ ...selected, apps: renumber(list) });
+  };
+
   const toggleAuto = (app: PresetApp) => {
     if (!selected) return;
     savePreset({
@@ -470,6 +478,7 @@ export function Panel() {
                   addOpen={adding}
                   addRef={addBtnRef}
                   onItem={openItemMenu}
+                  onReorder={busy ? undefined : reorderApps}
                 />
               )}
             </div>
