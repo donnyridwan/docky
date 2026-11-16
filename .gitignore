@@ -6,3 +6,4 @@ src-tauri/gen/schemas/
 *.log
 # Kunci privat updater tidak boleh masuk repo.
 *.key
+dist-release/
