@@ -159,7 +159,14 @@ pub fn show_recents(domain: &Value) -> Option<bool> {
 }
 
 /// Buat tile app baru, dengan bentuk yang sama seperti yang ditulis Dock sendiri.
+/// Pemisah (bundle ID berawalan `docky.spacer.`) menjadi `small-spacer-tile`.
 pub fn make_tile(spec: &TileSpec) -> Value {
+    if crate::model::is_spacer(&spec.bundle_id) {
+        let mut tile = Dictionary::new();
+        tile.insert("tile-data".into(), Value::Dictionary(Dictionary::new()));
+        tile.insert("tile-type".into(), Value::String("small-spacer-tile".into()));
+        return Value::Dictionary(tile);
+    }
     let mut file_data = Dictionary::new();
     file_data.insert("_CFURLString".into(), Value::String(file_url(&spec.path)));
     file_data.insert("_CFURLStringType".into(), Value::Integer(15.into()));
@@ -312,6 +319,24 @@ mod tests {
         let url = td.get("file-data").unwrap().as_dictionary().unwrap().get("_CFURLString").unwrap();
         assert_eq!(url.as_string(), Some("file:///Applications/Visual%20Studio%20Code.app/"));
         assert_eq!(td.get("bundle-identifier").unwrap().as_string(), Some("com.microsoft.VSCode"));
+    }
+
+    #[test]
+    fn spacer_becomes_small_spacer_tile() {
+        let domain = fixture("dock-macos15.plist");
+        let tiles = vec![
+            spec("com.figma.Desktop", "Figma", "/Applications/Figma.app"),
+            spec("docky.spacer.1", "Pemisah", ""),
+            spec("com.apple.Safari", "Safari", "/Applications/Safari.app"),
+        ];
+        let out = apply_preset(&domain, &tiles).unwrap();
+        validate(&out).unwrap();
+        let apps = apps_array(&out);
+        assert_eq!(apps.len(), 3);
+        let t = apps[1].as_dictionary().unwrap();
+        assert_eq!(t.get("tile-type").unwrap().as_string(), Some("small-spacer-tile"));
+        // Pemisah tidak dihitung sebagai app.
+        assert_eq!(app_ids(&out), vec!["com.figma.Desktop", "com.apple.Safari"]);
     }
 
     #[test]

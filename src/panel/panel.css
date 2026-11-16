@@ -1,9 +1,19 @@
-/* Panel mengambang. Desain: Figma "Docky UI" › 3 · Panel — semua state (P1–P13). */
+/* Panel di atas dock. Desain: Figma "Docky UI" › eXPERIMENT › Panel Docky · K1. */
 
 html,
-body {
-  background: transparent;
+body,
+#root {
+  height: 100%;
   overflow: hidden;
+}
+
+/* Isi menempel ke bawah jendela: saat jendela bertambah tinggi ke atas
+   (popover Tambah app), panel tetap di tempatnya. */
+.panel-root {
+  position: absolute;
+  left: 0;
+  right: 0;
+  bottom: 0;
 }
 
 .panel {
@@ -11,227 +21,138 @@ body {
   display: flex;
   flex-direction: column;
   width: 720px;
-  /* Sedikit tembus pandang supaya efek blur macOS di belakang jendela terasa. */
-  background: color-mix(in srgb, var(--bg-panel) 97%, transparent);
-  border: 1px solid var(--stroke-outline);
-  border-radius: var(--radius-panel);
-  overflow: visible;
+  border-radius: 18px;
+  overflow: hidden;
+  box-shadow: inset 0 0 0 1px rgba(255, 255, 255, 0.6);
 }
 
-/* ---- Header ------------------------------------------------------- */
+/* Kaca macOS dimatikan sementara (popover terbuka): pakai warna padat. */
+.panel.solid {
+  background: var(--glass-solid);
+  box-shadow:
+    inset 0 0 0 1px rgba(255, 255, 255, 0.6),
+    0 0 0 0.5px rgba(0, 0, 0, 0.15);
+}
 
-.panel-header {
+/* ---- Strip tab -------------------------------------------------------- */
+
+.strip {
   display: flex;
-  align-items: center;
-  gap: 10px;
-  height: 34px;
-  padding: 0 12px;
-  background: var(--bg-header);
-  border-bottom: 1px solid var(--stroke-outline);
-  border-radius: calc(var(--radius-panel) - 1px) calc(var(--radius-panel) - 1px) 0 0;
+  align-items: flex-end;
+  height: 36px;
+  padding: 4px 12px 0 14px;
+  background: var(--glass);
   flex-shrink: 0;
-  /* Bagian kosong header = pegangan untuk menyeret panel. */
-  cursor: grab;
 }
 
-.panel-header button {
+.panel.solid .strip {
+  background: transparent;
+}
+
+.strip .lights {
+  height: 32px;
+  align-items: center;
+}
+
+.strip .lights,
+.strip .spacer {
   cursor: default;
 }
 
-.panel-header .logo {
-  opacity: 0.9;
+.light .glyph {
+  width: 8px;
+  height: 8px;
+  color: rgba(0, 0, 0, 0.55);
+  opacity: 0;
+  transition: opacity 120ms ease;
 }
 
-.panel-title {
+.lights:hover .glyph,
+.lights:focus-within .glyph {
+  opacity: 1;
+}
+
+.strip .update {
+  align-self: center;
+  margin: 0 6px 3px 0;
+  height: 22px;
+  border-radius: 11px;
   font-size: 12px;
-  font-weight: 600;
-  color: var(--text-muted);
-  white-space: nowrap;
 }
 
-.icon.flipped {
-  transform: scaleX(-1);
-}
-
-.menu-anchor {
+.strip .more {
   position: relative;
-  display: flex;
+  align-self: center;
+  margin-bottom: 3px;
 }
 
-.header-menu {
-  top: 24px;
-  right: -4px;
-}
-
-.update-pill {
-  display: inline-flex;
-  align-items: center;
-  gap: 4px;
-  height: 20px;
-  padding: 0 8px 0 10px;
-  border-radius: 10px;
-  background: var(--blue);
-  font-size: 11px;
-  font-weight: 600;
-  white-space: nowrap;
-}
-
-.update-pill:not(:disabled):hover {
-  background: #3b7af0;
-}
-
-/* ---- Area isi dock ------------------------------------------------ */
-
-.panel-body {
-  padding: 10px 10px 0;
-}
-
-.field {
-  position: relative;
-  display: flex;
-  align-items: flex-start;
-  gap: 6px;
-  min-height: 102px;
-  padding: 14px 14px 12px;
-  background: var(--bg-field);
-  border-radius: var(--radius-field);
-}
-
-.dock-apps {
-  display: flex;
-  gap: 6px;
-  min-width: 0;
-  overflow-x: auto;
-  scrollbar-width: none;
-}
-
-.dock-apps::-webkit-scrollbar {
-  display: none;
-}
-
-/* App tile: ikon 52 px, titik buka otomatis, nama di bawah (komponen "App tile"). */
-.dock-app {
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  gap: 4px;
-  width: 64px;
-  flex-shrink: 0;
-}
-
-.dock-app-icon {
-  position: relative;
-}
-
-.dock-app .badge {
+.badge-dot {
   position: absolute;
-  top: -4px;
-  right: -6px;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  width: 18px;
-  height: 18px;
-  border-radius: 9px;
-  background: var(--warning);
-  color: var(--bg-header);
+  top: 3px;
+  right: 3px;
+  width: 7px;
+  height: 7px;
+  border-radius: 50%;
+  background: var(--blue);
+  box-shadow: 0 0 0 1.5px var(--glass-solid);
 }
 
-.auto-dot {
-  width: 4px;
-  height: 4px;
-  border-radius: 2px;
-}
+/* ---- Isi -------------------------------------------------------------- */
 
-.auto-dot.on {
-  background: rgba(255, 255, 255, 0.85);
-}
-
-.dock-app-name {
-  width: 100%;
-  font-size: 11px;
-  font-weight: 500;
-  text-align: center;
-  white-space: nowrap;
-  overflow: hidden;
-  text-overflow: ellipsis;
-}
-
-.dock-app.missing .dock-app-name,
-.dock-app.add .dock-app-name {
-  color: var(--text-muted);
-}
-
-.add-box {
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  border: 1.25px dashed var(--stroke-chip);
-  border-radius: var(--radius-tile);
-}
-
-.add-box .icon {
-  opacity: 0.8;
-}
-
-.dock-app.add:hover .add-box {
-  background: var(--bg-hover);
-}
-
-/* Pilihan mode (komponen "Pilihan mode"). */
-.mode {
-  position: relative;
+.body {
   display: flex;
   flex-direction: column;
-  align-items: flex-end;
-  gap: 6px;
-  flex-shrink: 0;
+  gap: 16px;
+  padding: 22px 14px 14px 16px;
+  background: var(--surface);
 }
 
-.mode-pill {
-  display: inline-flex;
-  align-items: center;
-  gap: 8px;
-  height: 28px;
-  padding: 0 8px 0 10px;
-  border-radius: 14px;
-  background: var(--bg-control);
-  font-size: 13px;
-  font-weight: 500;
-  white-space: nowrap;
+.panel.collapsed .strip {
+  padding-bottom: 4px;
+  height: 40px;
 }
 
-.mode-pill:hover {
-  background: #44444b;
-}
-
-.mode-pill.brutal {
-  background: rgba(242, 106, 46, 0.16);
-  border: 1px solid rgba(242, 106, 46, 0.6);
-  color: var(--brutal);
-}
-
-.mode-pill.brutal .icon.dim {
-  color: var(--text);
-}
-
-.mode-hint {
-  font-size: 11px;
-  color: var(--text-muted);
-  white-space: nowrap;
-}
-
-.mode-menu {
-  top: 32px;
-  right: 0;
-}
-
-/* Pesan (selamat datang, kosong, konfirmasi) — P9, P10, P11. */
-.message {
+.actions {
   display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.run-btn {
+  height: 30px;
+  padding: 0 16px 0 14px;
+  border-radius: 15px;
+  gap: 8px;
+}
+
+.spinner {
+  width: 13px;
+  height: 13px;
+  border-radius: 50%;
+  border: 2px solid rgba(255, 255, 255, 0.4);
+  border-top-color: #fff;
+  animation: spin 0.8s linear infinite;
+}
+
+@keyframes spin {
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+/* ---- Pesan di panggung (selamat datang, kosong, konfirmasi) --------- */
+
+.stage.message {
+  justify-content: flex-start;
   align-items: flex-start;
   gap: 12px;
-  width: 100%;
+  padding: 16px 18px;
+  animation: stage-in 220ms var(--ease-out) both;
+}
+
+.message-icon {
+  color: var(--blue);
+  margin-top: 1px;
 }
 
 .message-icon.warning {
@@ -265,17 +186,22 @@ body {
   margin-top: 12px;
 }
 
-.loading {
-  margin: 0;
-  font-size: 13px;
+@keyframes stage-in {
+  from {
+    opacity: 0;
+    transform: translateY(4px);
+  }
 }
 
-/* Progres (P6, P7). */
-.run {
-  display: flex;
+/* ---- Progres ---------------------------------------------------------- */
+
+.stage.run {
   flex-direction: column;
+  align-items: stretch;
+  justify-content: center;
   gap: 10px;
-  width: 100%;
+  padding: 16px 22px;
+  animation: stage-in 220ms var(--ease-out) both;
 }
 
 .run-title {
@@ -287,7 +213,7 @@ body {
 }
 
 .run-title .muted {
-  font-size: 13px;
+  font-size: 12px;
   font-weight: 400;
 }
 
@@ -297,28 +223,39 @@ body {
 }
 
 .steps span {
+  position: relative;
   flex: 1;
   height: 4px;
   border-radius: 2px;
-  background: var(--stroke-chip);
+  background: rgba(26, 26, 26, 0.1);
+  overflow: hidden;
 }
 
-.steps span.done {
+/* Isi bar tumbuh dengan transform, bukan width. */
+.steps span i {
+  position: absolute;
+  inset: 0;
   background: var(--blue);
+  transform: scaleX(0);
+  transform-origin: left;
+  transition: transform 300ms var(--ease-out);
 }
 
-.steps span.current {
-  background: linear-gradient(90deg, var(--blue), var(--stroke-chip));
-  background-size: 200% 100%;
-  animation: progress 1.2s linear infinite;
+.steps span.done i {
+  transform: scaleX(1);
 }
 
-.run.brutal .steps span.done {
+.steps span.current i {
+  animation: progress 1.1s linear infinite;
+  background: linear-gradient(90deg, transparent, var(--blue), transparent);
+}
+
+.run.brutal .steps span i {
   background: var(--brutal);
 }
 
-.run.brutal .steps span.current {
-  background-image: linear-gradient(90deg, var(--brutal), var(--stroke-chip));
+.run.brutal .steps span.current i {
+  background: linear-gradient(90deg, transparent, var(--brutal), transparent);
 }
 
 .step-names {
@@ -330,10 +267,11 @@ body {
   flex: 1;
   font-size: 11px;
   color: var(--text-subtle);
+  transition: color 200ms ease;
 }
 
 .step-names span.past {
-  color: var(--text);
+  color: var(--text-muted);
 }
 
 .step-names span.now {
@@ -348,52 +286,24 @@ body {
 
 @keyframes progress {
   from {
-    background-position: 100% 0;
+    transform: translateX(-100%);
   }
   to {
-    background-position: -100% 0;
-  }
-}
-
-/* ---- Baris bawah -------------------------------------------------- */
-
-.panel-footer {
-  display: flex;
-  align-items: center;
-  gap: 8px;
-  padding: 10px;
-}
-
-.chips {
-  display: flex;
-  gap: 8px;
-  min-width: 0;
-  overflow-x: auto;
-  scrollbar-width: none;
-}
-
-.chips::-webkit-scrollbar {
-  display: none;
-}
-
-.spinner {
-  width: 14px;
-  height: 14px;
-  border-radius: 50%;
-  border: 2px solid rgba(255, 255, 255, 0.35);
-  border-top-color: #fff;
-  animation: spin 0.8s linear infinite;
-}
-
-@keyframes spin {
-  to {
-    transform: rotate(360deg);
+    transform: translateX(100%);
   }
 }
 
 @media (prefers-reduced-motion: reduce) {
   .spinner,
-  .steps span.current {
+  .steps span.current i {
     animation: none;
+  }
+  .steps span.current i {
+    background: var(--blue);
+    opacity: 0.5;
+  }
+  .stage.message,
+  .stage.run {
+    animation-name: fade-in;
   }
 }

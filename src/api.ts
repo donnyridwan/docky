@@ -98,6 +98,23 @@ export const MODES: { mode: PresetMode; short: string; hint: string }[] = [
   { mode: "dock_only", short: "Hanya ganti isi dock", hint: "Hanya ganti isi dock. Tidak ada app yang ditutup atau dibuka." },
 ];
 
+/** Pemisah di dock disimpan sebagai "app" berawalan ini (lihat model.rs). */
+export const SPACER_PREFIX = "docky.spacer.";
+export const isSpacer = (bundleId: string) => bundleId.startsWith(SPACER_PREFIX);
+export function newSpacer(order: number): PresetApp {
+  const id = `${Date.now().toString(36)}${Math.random().toString(36).slice(2, 6)}`;
+  return { bundle_id: SPACER_PREFIX + id, name: "Pemisah", order, auto_open: false };
+}
+
+/** App preset diurutkan sesuai dock. */
+export const sortedApps = (p: Preset) => p.apps.slice().sort((a, b) => a.order - b.order);
+
+/** Susun ulang nomor urut 1..n. */
+export const renumber = (apps: PresetApp[]) => apps.map((a, i) => ({ ...a, order: i + 1 }));
+
+/** Warna titik mode di tab preset (Figma K1). */
+export const MODE_DOT: Record<PresetMode, string> = { clean: "#0088ff", brutal: "#f26a2e", dock_only: "#8e8e93" };
+
 export const MODE_LABEL: Record<PresetMode, string> = {
   clean: "Bersih total",
   brutal: "Bersih brutal",
@@ -152,6 +169,8 @@ export const api = {
   resetPanelPosition: () => call<void>("reset_panel_position"),
   hidePanel: () => call<void>("hide_panel"),
   openSettings: () => call<void>("open_settings"),
+  setPanelGlass: (on: boolean) => call<void>("set_panel_glass", { on }),
+  pickApp: () => call<InstalledApp | null>("pick_app"),
   quit: () => call<void>("quit_app"),
   notify: (title: string, body: string) => call<void>("notify", { title, body }),
   updateStatus: () => call<UpdateStatus>("update_status"),
@@ -333,6 +352,8 @@ async function mock(cmd: string, args: Record<string, unknown> = {}): Promise<un
       return demoUpdate;
     case "install_update":
       return undefined;
+    case "pick_app":
+      return { bundle_id: "com.apple.Notes", name: "Notes", path: "/System/Applications/Notes.app" };
     case "notify":
       console.info(`[notifikasi] ${args.title}: ${args.body}`);
       return undefined;

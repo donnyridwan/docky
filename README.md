@@ -10,15 +10,17 @@ Gratis dan open source (MIT), dibagikan di luar Mac App Store karena App Store t
 
 Docky berjalan tanpa ikon di dock. Klik ikon Docky di menu bar untuk membuka panel tepat di atas dock.
 
-- **Chip preset** di baris bawah memilih preset. Tombol bulat biru menjalankannya.
-- **Isi dock** menampilkan app di preset sesuai urutannya. Tombol bergaris putus-putus membuka Pengaturan untuk menambah app.
-- **Mode** di kanan:
+- **Tab preset** di atas, seperti folder di Chrome, memilih preset. Titik di tab menunjukkan modenya (biru Bersih total, oranye Bersih brutal, abu-abu Ganti dock saja). Tombol **+** di ujung tab membuat preset kosong atau preset dari kondisi sekarang: app yang sedang terbuka ditandai "buka otomatis", app yang hanya ada di dock ditandai tidak.
+- **Rak dock** menampilkan app di preset sesuai urutannya, tanpa nama. Titik di bawah ikon = dibuka otomatis, garis = pemisah. Klik ikon untuk menyalakan/mematikan "buka otomatis" atau menghapusnya. Kotak **+** membuka popover Tambah app: daftar app, **Tambah pemisah**, lalu kolom cari dan **Telusuri…** paling bawah, dekat tombolnya.
+- **Mode** di kiri bawah:
   - *Bersih total*: tutup app di luar preset, ganti dock, lalu buka app yang ditandai "buka otomatis".
   - *Bersih brutal*: tutup **semua** app, termasuk browser dan app di preset, ganti dock, lalu buka ulang app preset dari awal tanpa jendela dan tab lama (`open -F`). Yang dibuka ulang hanya app yang "buka otomatis"-nya menyala; app dengan saklar mati tetap tertutup. Docky, Finder, app menu bar, dan daftar Pengecualian dibiarkan; app dengan pekerjaan belum disimpan tetap tidak dipaksa tutup. Browser yang diatur memulihkan tab sendiri (misalnya Chrome "Continue where you left off", atau Arc) tetap membuka tab lamanya; matikan pengaturan itu kalau ingin benar-benar bersih.
   - *Ganti dock saja*: hanya mengganti isi dock.
-- **+** membuat preset dari kondisi sekarang: app yang sedang terbuka ditandai "buka otomatis", app yang hanya ada di dock ditandai tidak.
-- **Kembalikan** membatalkan preset terakhir: dock dipulihkan dan app yang tadi ditutup dibuka lagi. Dokumen di dalam app belum tentu ikut kembali, tergantung apakah app itu memulihkan jendelanya sendiri.
-- **Dock asli** (menu ☰ atau menu ikon menu bar) memulihkan dock seperti sebelum Docky pertama dipakai.
+- **Jalankan** (kanan bawah) menjalankan preset.
+- **Menu ⋯** berisi Pengaturan, Kembalikan preset terakhir, Dock asli, Ciutkan, Periksa update, dan Keluar. Saat Pengaturan terbuka, panel disembunyikan; panel muncul lagi saat Pengaturan ditutup.
+- **Kembalikan preset terakhir** membatalkan preset terakhir: dock dipulihkan dan app yang tadi ditutup dibuka lagi. Dokumen di dalam app belum tentu ikut kembali, tergantung apakah app itu memulihkan jendelanya sendiri.
+- **Dock asli** (menu ⋯ atau menu ikon menu bar) memulihkan dock seperti sebelum Docky pertama dipakai.
+- **Pemisah** ditulis ke dock sebagai spasi kecil (`small-spacer-tile`), karena macOS tidak punya garis di antara app.
 
 Contoh preset *Kerja*:
 
@@ -149,8 +151,9 @@ src-tauri/             App Tauri
   src/lib.rs           Tauri command, ikon menu bar, jendela panel dan Pengaturan
   src/platform/        AppController (NSRunningApplication), DockManager, ikon app (NSWorkspace)
 src/                   Tampilan React + TypeScript
-  panel/               Panel mengambang (Figma "Docky UI" › 3 · Panel, state P1–P13)
-  settings/            Jendela Pengaturan (Figma "Docky UI" › 5 · Pengaturan, state S1–S13)
+  panel/               Panel mengambang (Figma "Docky UI" › eXPERIMENT › Panel Docky · K1)
+  settings/            Jendela Pengaturan (Figma "Docky UI" › eXPERIMENT › Redesign Pengaturan, S1–S6)
+  components/          Tab preset, rak dock, pilihan mode, popover Tambah app, menu
   assets/icons/        Ikon 16 px dari Figma
 ```
 

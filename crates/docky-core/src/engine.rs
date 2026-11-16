@@ -286,6 +286,10 @@ impl<A: AppController, D: DockManager> Engine<A, D> {
         emit(Step::ReplaceDock, StepStatus::Started, None);
         let mut tiles = Vec::new();
         for app in preset.sorted_apps() {
+            if app.is_spacer() {
+                tiles.push(TileSpec { bundle_id: app.bundle_id.clone(), name: String::new(), path: String::new() });
+                continue;
+            }
             match self.apps.app_path(&app.bundle_id) {
                 Some(path) => tiles.push(TileSpec { bundle_id: app.bundle_id.clone(), name: app.name.clone(), path }),
                 None => summary.missing.push(app.name.clone()),
@@ -296,7 +300,8 @@ impl<A: AppController, D: DockManager> Engine<A, D> {
             if new == before {
                 return Ok(());
             }
-            let expected: Vec<String> = tiles.iter().map(|t| t.bundle_id.clone()).collect();
+            let expected: Vec<String> =
+                tiles.iter().filter(|t| !crate::model::is_spacer(&t.bundle_id)).map(|t| t.bundle_id.clone()).collect();
             self.write_and_verify(&new, &expected, &before)
         });
         match dock_result {
@@ -583,6 +588,24 @@ mod tests {
         assert_eq!(summary.opened, vec!["Claude"]);
         let d = dock::parse(&s.dock.current()).unwrap();
         assert!(!dock::app_ids(&d).contains(&"com.tinyspeck.slackmacgap".to_string()));
+    }
+
+    #[test]
+    fn spacer_is_written_to_dock_and_never_opened() {
+        let s = setup("dock-macos14.plist");
+        let mut p = kerja();
+        p.apps.insert(
+            2,
+            PresetApp { bundle_id: "docky.spacer.a1".into(), name: "Pemisah".into(), order: 2, auto_open: true },
+        );
+        p.normalize();
+        assert!(!p.apps.iter().find(|a| a.is_spacer()).unwrap().auto_open);
+        let summary = s.engine.run_preset(&p, &fast(), &mut |_| {}).unwrap();
+        assert!(summary.missing.is_empty());
+        assert!(summary.dock_changed);
+        assert!(s.apps.open_calls().iter().all(|id| !id.starts_with("docky.spacer.")));
+        let d = dock::parse(&s.dock.current()).unwrap();
+        assert_eq!(dock::app_ids(&d).len(), 4);
     }
 
     #[test]

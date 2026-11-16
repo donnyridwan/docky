@@ -2,10 +2,11 @@
 // menu HTML akan terpotong; menu native digambar di luar jendela.
 import { LogicalPosition } from "@tauri-apps/api/dpi";
 import { CheckMenuItem, Menu, MenuItem, PredefinedMenuItem } from "@tauri-apps/api/menu";
+import type { IconName } from "./components/Icon";
 
 export type MenuEntry =
   | "separator"
-  | { text: string; enabled?: boolean; checked?: boolean; action: () => void };
+  | { text: string; hint?: string; icon?: IconName; enabled?: boolean; checked?: boolean; action: () => void };
 
 export async function popupMenu(anchor: HTMLElement, entries: MenuEntry[]) {
   const items = await Promise.all(

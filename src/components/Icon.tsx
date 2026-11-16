@@ -7,6 +7,7 @@ import chevron from "../assets/icons/chevron.svg";
 import close from "../assets/icons/close.svg";
 import collapse from "../assets/icons/collapse.svg";
 import dock from "../assets/icons/dock.svg";
+import ellipsis from "../assets/icons/ellipsis.svg";
 import error from "../assets/icons/error.svg";
 import gear from "../assets/icons/gear.svg";
 import grip from "../assets/icons/grip.svg";
@@ -24,7 +25,7 @@ import undo from "../assets/icons/undo.svg";
 import warning from "../assets/icons/warning.svg";
 
 const ICONS = {
-  arrow, bolt, check, chevron, close, collapse, dock, error, gear, grip, info, layers,
+  arrow, bolt, check, chevron, close, collapse, dock, ellipsis, error, gear, grip, info, layers,
   menu, play, plus, refresh, search, sliders, success, trash, undo, warning,
 } as const;
 

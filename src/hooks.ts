@@ -74,3 +74,30 @@ export function useUpdateStatus() {
   }, []);
   return status;
 }
+
+/**
+ * Mount/unmount dengan animasi masuk dan keluar. `state` menjadi "open" satu
+ * frame setelah elemen dipasang (supaya transisi CSS berjalan), dan "closed"
+ * selama `exitMs` sebelum elemen dilepas.
+ */
+export function usePresence(open: boolean, exitMs = 150) {
+  const [mounted, setMounted] = useState(open);
+  const [state, setState] = useState<"open" | "closed">("closed");
+  useEffect(() => {
+    if (open) {
+      setMounted(true);
+      let inner = 0;
+      const outer = requestAnimationFrame(() => {
+        inner = requestAnimationFrame(() => setState("open"));
+      });
+      return () => {
+        cancelAnimationFrame(outer);
+        cancelAnimationFrame(inner);
+      };
+    }
+    setState("closed");
+    const t = setTimeout(() => setMounted(false), exitMs);
+    return () => clearTimeout(t);
+  }, [open, exitMs]);
+  return { mounted, state };
+}

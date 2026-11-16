@@ -1,7 +1,7 @@
 {
   "$schema": "https://schema.tauri.app/config/2",
   "productName": "Docky",
-  "version": "0.1.5",
+  "version": "0.1.6",
   "identifier": "com.gandariastudio.docky",
   "build": {
     "beforeDevCommand": "npm run dev",
@@ -17,7 +17,7 @@
         "title": "Docky",
         "url": "index.html",
         "width": 720,
-        "height": 132,
+        "height": 222,
         "resizable": false,
         "decorations": false,
         "transparent": true,
@@ -30,11 +30,12 @@
         "acceptFirstMouse": true,
         "windowEffects": {
           "effects": [
-            "hudWindow"
+            "popover"
           ],
           "state": "active",
-          "radius": 16
-        }
+          "radius": 18
+        },
+        "theme": "Light"
       }
     ],
     "security": {

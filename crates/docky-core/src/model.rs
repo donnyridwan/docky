@@ -5,6 +5,15 @@ use serde::{Deserialize, Serialize};
 /// Bundle ID Finder. Finder tidak pernah ditutup oleh Docky.
 pub const FINDER_BUNDLE_ID: &str = "com.apple.finder";
 
+/// Awalan bundle ID untuk pemisah di dock. Pemisah disimpan sebagai "app"
+/// di preset supaya ikut urutan, lalu ditulis ke dock sebagai `small-spacer-tile`.
+pub const SPACER_PREFIX: &str = "docky.spacer.";
+
+/// `true` kalau bundle ID ini pemisah, bukan app.
+pub fn is_spacer(bundle_id: &str) -> bool {
+    bundle_id.starts_with(SPACER_PREFIX)
+}
+
 /// Mode menjalankan preset.
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize, Deserialize, Default)]
 #[serde(rename_all = "snake_case")]
@@ -28,6 +37,13 @@ pub struct PresetApp {
     pub order: u32,
     /// Dibuka saat preset dijalankan (mode Bersih total).
     pub auto_open: bool,
+}
+
+impl PresetApp {
+    /// Pemisah di dock, bukan app.
+    pub fn is_spacer(&self) -> bool {
+        is_spacer(&self.bundle_id)
+    }
 }
 
 #[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
@@ -56,7 +72,7 @@ impl Preset {
     }
 
     pub fn contains(&self, bundle_id: &str) -> bool {
-        self.apps.iter().any(|a| a.bundle_id == bundle_id)
+        self.apps.iter().any(|a| !a.is_spacer() && a.bundle_id == bundle_id)
     }
 
     /// Rapikan nomor urut menjadi 1..n tanpa celah, dan buang bundle ID ganda.
@@ -66,6 +82,10 @@ impl Preset {
         self.apps.retain(|a| seen.insert(a.bundle_id.clone()));
         for (i, app) in self.apps.iter_mut().enumerate() {
             app.order = i as u32 + 1;
+            // Pemisah tidak pernah dibuka.
+            if app.is_spacer() {
+                app.auto_open = false;
+            }
         }
     }
 }

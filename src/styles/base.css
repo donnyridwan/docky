@@ -1,32 +1,34 @@
-/* Token warna dari file Figma "Docky UI" (koleksi variable "Docky", mode Gelap). */
+/* Tema macOS 26 terang, dari Figma "Docky UI" › eXPERIMENT (Panel Docky · K1,
+   Redesign Pengaturan S1–S6). Gerak mengikuti skill animasi Emil Kowalski:
+   hanya transform/opacity, ease-out kuat, di bawah 300 ms, dan versi lembut
+   untuk "kurangi gerakan". */
 :root {
-  --bg-panel: #1e1e21;
-  --bg-header: #17171a;
-  --bg-field: #2a2a2e;
-  --bg-control: #3a3a40;
-  --bg-chip: #26262a;
-  --bg-hover: #33333a;
-  --stroke-chip: #4a4a52;
-  --stroke-outline: #0b0b0d;
-  --stroke-divider: #34343a;
-  --text: #ffffff;
-  --text-muted: #a1a1aa;
-  --text-subtle: #6e6e78;
-  --blue: #2f6fed;
+  --glass: rgba(246, 246, 246, 0.6);
+  --glass-solid: #ececee;
+  --surface: #ffffff;
+  --text: #1a1a1a;
+  --text-muted: #727272;
+  --text-subtle: #aeaeb2;
+  --separator: rgba(0, 0, 0, 0.07);
+  --fill: rgba(118, 118, 128, 0.12);
+  --fill-hover: rgba(118, 118, 128, 0.2);
+  --fill-group: rgba(0, 0, 0, 0.035);
+  --blue: #0088ff;
+  --blue-hover: #0a7cf0;
+  --blue-tint: rgba(0, 136, 255, 0.14);
   --brutal: #f26a2e;
   --success: #34c759;
-  --warning: #ffb020;
-  --danger: #ff4d4f;
-  --focus: rgba(47, 111, 237, 0.65);
+  --success-text: #248a3d;
+  --warning: #ff9f0a;
+  --danger: #ff3b30;
+  --focus: rgba(0, 136, 255, 0.55);
 
-  --radius-panel: 18px;
-  --radius-field: 12px;
-  --radius-tile: 12px;
-  --radius-pill: 16px;
+  --ease-out: cubic-bezier(0.23, 1, 0.32, 1);
+  --ease-in-out: cubic-bezier(0.77, 0, 0.175, 1);
 
-  color-scheme: dark;
-  font-family: "Archivo Variable", "Archivo", -apple-system, BlinkMacSystemFont, sans-serif;
-  font-size: 14px;
+  color-scheme: light;
+  font-family: -apple-system, BlinkMacSystemFont, "SF Pro Text", "Inter", system-ui, sans-serif;
+  font-size: 13px;
   line-height: normal;
   color: var(--text);
   -webkit-font-smoothing: antialiased;
@@ -44,6 +46,7 @@ body,
 #root {
   margin: 0;
   padding: 0;
+  background: transparent;
 }
 
 button {
@@ -72,7 +75,6 @@ input {
   color: inherit;
 }
 
-/* Ikon mask: warnanya mengikuti `color`. */
 .icon {
   display: inline-block;
   flex-shrink: 0;
@@ -106,128 +108,401 @@ input {
   color: var(--text-subtle);
 }
 
-.spacer {
+.spacer,
+.grow {
   flex: 1 0 0;
   min-width: 1px;
 }
 
-/* ---- Tombol (komponen "Tombol" di Figma) -------------------------- */
+/* ---- Tekan: umpan balik kecil untuk semua yang bisa diklik ------------ */
 
-.pill {
+.press {
+  transition: transform 160ms var(--ease-out);
+}
+
+.press:active:not(:disabled) {
+  transform: scale(0.97);
+}
+
+/* ---- Kapsul (tombol macOS 26) --------------------------------------- */
+
+.capsule {
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  gap: 8px;
-  height: 32px;
-  padding: 0 14px 0 12px;
-  border-radius: var(--radius-pill);
-  background: var(--bg-chip);
-  border: 1px solid var(--stroke-chip);
+  gap: 6px;
+  height: 28px;
+  padding: 0 12px;
+  border-radius: 14px;
+  background: var(--fill);
+  font-size: 13px;
+  font-weight: 500;
   white-space: nowrap;
-  font-size: 14px;
   flex-shrink: 0;
+  transition:
+    transform 160ms var(--ease-out),
+    background-color 150ms ease;
 }
 
-.pill.no-icon {
-  padding: 0 14px;
+.capsule:has(.icon:first-child) {
+  padding-left: 10px;
 }
 
-.pill:not(:disabled):hover {
-  background: var(--bg-hover);
+.capsule:active:not(:disabled) {
+  transform: scale(0.97);
 }
 
-.pill.primary,
-.pill.brutal,
-.pill.danger {
-  border-color: transparent;
+.capsule.primary {
+  background: var(--blue);
+  color: #fff;
+  font-weight: 600;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.15);
+}
+
+.capsule.danger {
+  background: var(--danger);
+  color: #fff;
   font-weight: 600;
 }
 
-.pill.primary {
-  background: var(--blue);
+.capsule.plain {
+  background: transparent;
 }
 
-.pill.primary:not(:disabled):hover {
-  background: #3b7af0;
+.capsule.active-tint {
+  background: var(--blue-tint);
 }
 
-.pill.brutal {
-  background: var(--brutal);
+@media (hover: hover) and (pointer: fine) {
+  .capsule:not(:disabled):hover {
+    background: var(--fill-hover);
+  }
+  .capsule.primary:not(:disabled):hover {
+    background: var(--blue-hover);
+  }
+  .capsule.danger:not(:disabled):hover {
+    background: #f0352a;
+  }
+  .capsule.plain:not(:disabled):hover {
+    background: var(--fill);
+  }
 }
 
-.pill.brutal:not(:disabled):hover {
-  background: #f47a43;
-}
-
-.pill.danger {
-  background: var(--danger);
-}
-
-.pill.full {
-  width: 100%;
-}
-
-/* Chip preset (komponen "Chip preset"). */
-.chip {
+/* Tombol ikon tanpa latar (⋯, tutup). */
+.ghost {
   display: inline-flex;
   align-items: center;
+  justify-content: center;
+  width: 26px;
+  height: 26px;
+  border-radius: 13px;
+  color: var(--text-muted);
+  flex-shrink: 0;
+  transition:
+    transform 160ms var(--ease-out),
+    background-color 150ms ease,
+    color 150ms ease;
+}
+
+.ghost:active:not(:disabled) {
+  transform: scale(0.94);
+}
+
+@media (hover: hover) and (pointer: fine) {
+  .ghost:not(:disabled):hover {
+    background: var(--fill);
+    color: var(--text);
+  }
+}
+
+.ghost.small {
+  width: 22px;
+  height: 22px;
+}
+
+/* ---- Lampu jendela (panel) ------------------------------------------ */
+
+.lights {
+  display: flex;
   gap: 8px;
-  height: 32px;
-  padding: 0 14px 0 12px;
-  border-radius: var(--radius-pill);
-  background: var(--bg-chip);
-  border: 1px solid var(--stroke-chip);
-  white-space: nowrap;
-  font-size: 14px;
-  flex-shrink: 0;
+  padding-right: 16px;
 }
 
-.chip:not(:disabled):hover {
-  background: var(--bg-hover);
-}
-
-.chip.active {
-  background: var(--bg-control);
-  border-color: transparent;
-  font-weight: 500;
-}
-
-/* Tombol bulat (komponen "Tombol bulat"). */
-.round {
+.light {
+  position: relative;
+  width: 12px;
+  height: 12px;
+  border-radius: 50%;
+  box-shadow: inset 0 0 0 0.5px rgba(0, 0, 0, 0.12);
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  width: 32px;
-  height: 32px;
-  border-radius: 16px;
-  border: 1px solid var(--stroke-chip);
-  flex-shrink: 0;
 }
 
-.round:not(:disabled):hover {
-  background: var(--bg-hover);
+.light.red {
+  background: #ff5f57;
+}
+.light.yellow {
+  background: #febc2e;
+}
+.light.green {
+  background: #28c840;
 }
 
-.icon-btn {
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  border-radius: 4px;
+/* Simbol muncul saat kursor di atas grup, seperti di macOS. */
+.light .icon {
+  width: 8px !important;
+  height: 8px !important;
+  color: rgba(0, 0, 0, 0.55);
+  opacity: 0;
+  transition: opacity 120ms ease;
 }
 
-.icon-btn:hover .icon {
+.lights:hover .light .icon {
   opacity: 1;
 }
 
-/* ---- App tile ------------------------------------------------------ */
+/* ---- Tab folder (seperti Chrome) ------------------------------------ */
+
+.tabs {
+  display: flex;
+  align-items: flex-end;
+  gap: 2px;
+  min-width: 0;
+  height: 32px;
+}
+
+.tab {
+  position: relative;
+  display: inline-flex;
+  align-items: center;
+  gap: 7px;
+  height: 32px;
+  min-width: 56px;
+  max-width: 150px;
+  padding: 0 16px 0 14px;
+  border-radius: 10px 10px 0 0;
+  color: var(--text-muted);
+  font-size: 13px;
+  font-weight: 500;
+  white-space: nowrap;
+  flex-shrink: 1;
+  transition:
+    background-color 150ms ease,
+    color 150ms ease;
+}
+
+.tab-name {
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.tab-dot {
+  width: 7px;
+  height: 7px;
+  border-radius: 50%;
+  flex-shrink: 0;
+}
+
+.tab.active {
+  background: var(--surface);
+  color: var(--text);
+  font-weight: 600;
+  z-index: 1;
+}
+
+/* Lengkung cekung di kaki tab aktif, menyatu dengan isi di bawahnya. */
+.tab.active::before,
+.tab.active::after {
+  content: "";
+  position: absolute;
+  bottom: 0;
+  width: 10px;
+  height: 10px;
+  pointer-events: none;
+}
+
+.tab.active::before {
+  left: -10px;
+  background: radial-gradient(circle at 0 0, transparent 9.5px, var(--surface) 10px);
+}
+
+.tab.active::after {
+  right: -10px;
+  background: radial-gradient(circle at 100% 0, transparent 9.5px, var(--surface) 10px);
+}
+
+@media (hover: hover) and (pointer: fine) {
+  .tab:not(.active):not(:disabled):hover {
+    background: rgba(0, 0, 0, 0.05);
+    color: var(--text);
+  }
+}
+
+.tab-new {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 26px;
+  height: 26px;
+  margin: 0 0 3px 6px;
+  border-radius: 13px;
+  color: var(--text-muted);
+  flex-shrink: 0;
+  transition:
+    transform 160ms var(--ease-out),
+    background-color 150ms ease;
+}
+
+.tab-new:active:not(:disabled) {
+  transform: scale(0.94);
+}
+
+@media (hover: hover) and (pointer: fine) {
+  .tab-new:not(:disabled):hover {
+    background: var(--fill);
+    color: var(--text);
+  }
+}
+
+/* ---- Panggung pratinjau + rak dock ------------------------------------ */
+
+.stage {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 102px;
+  padding: 16px 24px;
+  border-radius: 14px;
+  background: linear-gradient(180deg, #f0f2f7, #dbe5f5);
+}
+
+.shelf {
+  display: flex;
+  align-items: flex-start;
+  gap: 10px;
+  max-width: 100%;
+  padding: 8px 10px 4px;
+  border-radius: 20px;
+  background: rgba(255, 255, 255, 0.55);
+  border: 1px solid rgba(255, 255, 255, 0.9);
+  box-shadow: 0 6px 18px rgba(0, 0, 0, 0.12);
+  -webkit-backdrop-filter: blur(20px);
+  backdrop-filter: blur(20px);
+  overflow-x: auto;
+  scrollbar-width: none;
+}
+
+.shelf::-webkit-scrollbar {
+  display: none;
+}
+
+.shelf-item {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 4px;
+  flex-shrink: 0;
+  /* Masuk saat preset diganti atau app ditambahkan. */
+  animation: pop-in 220ms var(--ease-out) both;
+}
+
+.shelf-item .tile {
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.18);
+  transition: transform 160ms var(--ease-out);
+}
+
+.shelf-item:active .tile {
+  transform: scale(0.94);
+}
+
+.shelf-item .tile.has-icon {
+  box-shadow: none;
+}
+
+.run-dot {
+  width: 4px;
+  height: 4px;
+  border-radius: 50%;
+  background: rgba(26, 26, 26, 0.75);
+  transition:
+    opacity 150ms ease,
+    transform 150ms var(--ease-out);
+}
+
+.run-dot.off {
+  opacity: 0;
+  transform: scale(0.5);
+}
+
+.shelf-divider-hit {
+  display: flex;
+  justify-content: center;
+  width: 9px;
+  height: 52px;
+  margin: 0 -3px;
+  border-radius: 4px;
+  flex-shrink: 0;
+  animation: pop-in 220ms var(--ease-out) both;
+}
+
+.shelf-divider {
+  width: 1px;
+  height: 40px;
+  margin-top: 4px;
+  background: rgba(26, 26, 26, 0.18);
+}
+
+.shelf-add {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 48px;
+  height: 48px;
+  border-radius: 11px;
+  background: rgba(0, 0, 0, 0.05);
+  border: 1px dashed rgba(26, 26, 26, 0.2);
+  color: var(--text-muted);
+  transition:
+    transform 160ms var(--ease-out),
+    background-color 150ms ease,
+    border-color 150ms ease,
+    color 150ms ease;
+}
+
+.shelf-add:active:not(:disabled) {
+  transform: scale(0.94);
+}
+
+.shelf-add.open {
+  background: var(--blue-tint);
+  border-color: rgba(0, 136, 255, 0.6);
+  color: var(--blue);
+}
+
+@media (hover: hover) and (pointer: fine) {
+  .shelf-add:not(:disabled):hover {
+    background: rgba(0, 0, 0, 0.08);
+    color: var(--text);
+  }
+}
+
+@keyframes pop-in {
+  from {
+    opacity: 0;
+    transform: translateY(3px) scale(0.96);
+  }
+}
+
+/* ---- App tile -------------------------------------------------------- */
 
 .tile {
   position: relative;
   display: flex;
   align-items: center;
   justify-content: center;
-  border-radius: var(--radius-tile);
-  font-weight: 600;
+  color: #fff;
+  font-weight: 700;
   flex-shrink: 0;
   overflow: hidden;
 }
@@ -236,11 +511,10 @@ input {
   display: block;
 }
 
-/* Ikon app macOS sudah punya margin transparan sekitar 10% di tiap sisi.
-   Gambar diperbesar sedikit supaya isi ikonnya memenuhi kotak tile. */
+/* Ikon macOS sudah punya margin transparan ±10%; perbesar sedikit. */
 .tile.has-icon {
   overflow: visible;
-  border-radius: 0;
+  border-radius: 0 !important;
 }
 
 .tile.has-icon > img {
@@ -255,16 +529,108 @@ input {
   opacity: 0.35;
 }
 
-/* ---- Saklar -------------------------------------------------------- */
+/* Ikon pemisah di daftar (kotak putus-putus dengan garis). */
+.divider-tile {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 6px;
+  border: 1px dashed rgba(26, 26, 26, 0.25);
+  background: rgba(118, 118, 128, 0.1);
+  flex-shrink: 0;
+}
+
+.divider-tile::after {
+  content: "";
+  width: 1.5px;
+  height: 62%;
+  border-radius: 1px;
+  background: rgba(26, 26, 26, 0.55);
+}
+
+/* ---- Pilihan mode (segmented) --------------------------------------- */
+
+.seg {
+  position: relative;
+  display: inline-flex;
+  height: 30px;
+  padding: 2px;
+  border-radius: 15px;
+  background: var(--fill);
+  flex-shrink: 0;
+}
+
+.seg-layer {
+  display: flex;
+  gap: 2px;
+}
+
+.seg-item {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  height: 26px;
+  padding: 0 12px 0 11px;
+  border-radius: 13px;
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--text-muted);
+  white-space: nowrap;
+}
+
+.seg-item.brutal {
+  color: var(--brutal);
+}
+
+/* Salinan aktif di atas, dipotong dengan clip-path supaya warna teks dan
+   latar berpindah bersama (resep "tab indicator" Emil). */
+.seg-thumb {
+  position: absolute;
+  inset: 2px;
+  pointer-events: none;
+  clip-path: inset(0 var(--clip-right, 100%) 0 var(--clip-left, 0) round 13px);
+  transition: clip-path 250ms var(--ease-in-out);
+}
+
+.seg-thumb .seg-layer {
+  background: var(--surface);
+}
+
+.seg-thumb .seg-item {
+  color: var(--text);
+}
+
+.seg-thumb .seg-item.brutal {
+  color: var(--brutal);
+}
+
+.seg button.seg-item {
+  transition: transform 160ms var(--ease-out);
+}
+
+.seg button.seg-item:active:not(:disabled) {
+  transform: scale(0.96);
+}
+
+@media (hover: hover) and (pointer: fine) {
+  .seg button.seg-item:not(:disabled):hover {
+    color: var(--text);
+  }
+  .seg button.seg-item.brutal:not(:disabled):hover {
+    color: var(--brutal);
+  }
+}
+
+/* ---- Saklar macOS 26 ------------------------------------------------- */
 
 .switch {
   position: relative;
-  width: 32px;
-  height: 18px;
-  border-radius: 9px;
-  background: var(--stroke-chip);
+  width: 36px;
+  height: 20px;
+  border-radius: 10px;
+  background: rgba(118, 118, 128, 0.2);
   flex-shrink: 0;
-  transition: background 0.15s;
+  transition: background-color 200ms ease;
 }
 
 .switch::after {
@@ -272,11 +638,16 @@ input {
   position: absolute;
   top: 2px;
   left: 2px;
-  width: 14px;
-  height: 14px;
+  width: 16px;
+  height: 16px;
   border-radius: 50%;
-  background: var(--text);
-  transition: transform 0.15s;
+  background: #fff;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.22);
+  transition: transform 200ms var(--ease-out);
+}
+
+.switch:active:not(:disabled)::after {
+  transform: scaleX(1.15);
 }
 
 .switch[aria-checked="true"] {
@@ -284,58 +655,301 @@ input {
 }
 
 .switch[aria-checked="true"]::after {
-  transform: translateX(14px);
+  transform: translateX(16px);
 }
 
-/* ---- Menu (cadangan HTML untuk pratinjau di browser) ---------------- */
+.switch[aria-checked="true"]:active:not(:disabled)::after {
+  transform: translateX(14px) scaleX(1.15);
+}
+
+/* ---- Popover (Tambah app, menu HTML) --------------------------------- */
+
+.popover {
+  position: absolute;
+  z-index: 20;
+  padding: 10px;
+  border-radius: 14px;
+  background: rgba(247, 247, 248, 0.96);
+  -webkit-backdrop-filter: blur(30px) saturate(1.8);
+  backdrop-filter: blur(30px) saturate(1.8);
+  box-shadow:
+    0 0 0 0.5px rgba(0, 0, 0, 0.12),
+    inset 0 0 0 1px rgba(255, 255, 255, 0.7),
+    0 14px 40px rgba(0, 0, 0, 0.22);
+  transform-origin: var(--origin-x, 50%) var(--origin-y, 100%);
+  transition:
+    opacity 200ms var(--ease-out),
+    transform 200ms var(--ease-out);
+}
+
+.popover[data-state="closed"] {
+  opacity: 0;
+  transform: scale(0.95);
+  transition-duration: 150ms;
+  pointer-events: none;
+}
+
+.popover-arrow {
+  position: absolute;
+  left: var(--arrow-x, 50%);
+  width: 20px;
+  height: 10px;
+  margin-left: -10px;
+  pointer-events: none;
+}
+
+.popover-arrow.down {
+  top: 100%;
+  margin-top: -0.5px;
+}
+
+.popover-arrow.up {
+  bottom: 100%;
+  margin-bottom: -0.5px;
+  transform: scaleY(-1);
+}
+
+/* Isi popover Tambah app (Figma S5/S6). */
+.add-pop {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.add-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 0 4px;
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--text-muted);
+}
+
+.add-head .subtle {
+  font-size: 11px;
+  font-weight: 400;
+}
+
+.add-list {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  max-height: 279px;
+  overflow-y: auto;
+}
+
+.add-list li + li {
+  border-top: 1px solid var(--separator);
+  margin-left: 42px;
+}
+
+.add-list li + li button {
+  margin-left: -42px;
+  width: calc(100% + 42px);
+}
+
+.add-list button {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  width: 100%;
+  height: 34px;
+  padding: 0 6px;
+  border-radius: 8px;
+  text-align: left;
+  font-size: 13px;
+}
+
+/* Sorotan instan, seperti menu macOS. */
+.add-list button.hl {
+  background: var(--blue);
+  color: #fff;
+}
+
+.add-list li:has(button.hl) + li,
+.add-list li:has(+ li button.hl) {
+  border-color: transparent;
+}
+
+.add-name {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.add-empty {
+  padding: 18px 8px;
+  color: var(--text-muted);
+  text-align: center;
+}
+
+.add-spacer {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  height: 34px;
+  padding: 0 8px 0 6px;
+  border-top: 1px solid var(--separator);
+  border-radius: 0;
+  text-align: left;
+  transition: background-color 120ms ease;
+}
+
+.add-spacer:hover {
+  background: var(--fill);
+  border-radius: 8px;
+}
+
+.small {
+  font-size: 11px;
+}
+
+.add-search {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.search-field {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  flex: 1;
+  height: 28px;
+  padding: 0 8px;
+  border-radius: 8px;
+  background: #fff;
+  color: var(--text-muted);
+  box-shadow:
+    0 0 0 2px rgba(0, 136, 255, 0.7),
+    0 0.5px 1px rgba(0, 0, 0, 0.08);
+}
+
+.search-field input {
+  flex: 1;
+  min-width: 0;
+  border: none;
+  outline: none;
+  background: transparent;
+  color: var(--text);
+  font-size: 13px;
+}
+
+.search-field input::placeholder {
+  color: var(--text-subtle);
+}
+
+.search-field input:focus-visible {
+  outline: none;
+}
+
+.capsule.small {
+  height: 28px;
+  border-radius: 14px;
+}
+
+/* ---- Menu HTML (Pengaturan dan pratinjau browser) ------------------- */
 
 .menu {
   position: absolute;
-  z-index: 10;
-  min-width: 220px;
+  z-index: 30;
+  min-width: 230px;
   padding: 5px;
-  background: rgba(42, 42, 46, 0.96);
-  border: 1px solid rgba(255, 255, 255, 0.12);
-  border-radius: 8px;
-  box-shadow: 0 10px 28px rgba(0, 0, 0, 0.5);
+  border-radius: 13px;
+  background: rgba(245, 245, 245, 0.92);
+  -webkit-backdrop-filter: blur(30px) saturate(1.8);
+  backdrop-filter: blur(30px) saturate(1.8);
+  box-shadow:
+    0 0 0 0.5px rgba(0, 0, 0, 0.1),
+    0 8px 25px rgba(0, 0, 0, 0.16);
+  transform-origin: var(--origin-x, 0) 0;
+  transition:
+    opacity 180ms var(--ease-out),
+    transform 180ms var(--ease-out);
+}
+
+.menu[data-state="closed"] {
+  opacity: 0;
+  transform: scale(0.96);
+  transition-duration: 120ms;
+  pointer-events: none;
 }
 
 .menu button {
   display: flex;
   align-items: flex-start;
-  gap: 6px;
+  gap: 8px;
   width: 100%;
-  padding: 5px 12px 5px 8px;
-  border-radius: 6px;
+  padding: 5px 10px 5px 8px;
+  border-radius: 8px;
   text-align: left;
   font-size: 13px;
   white-space: nowrap;
 }
 
-.menu button:hover,
+/* Sorotan menu macOS: instan, tanpa transisi. */
+.menu button:not(:disabled):hover,
 .menu button:focus-visible {
   background: var(--blue);
+  color: #fff;
   outline: none;
 }
 
-.menu hr {
-  border: none;
-  border-top: 1px solid rgba(255, 255, 255, 0.12);
-  margin: 5px 6px;
-}
-
-.menu .check {
-  width: 16px;
-  display: inline-flex;
+.menu .icon {
+  margin-top: 1px;
 }
 
 .menu small {
   display: block;
   font-size: 11px;
   color: var(--text-muted);
-  margin-top: 2px;
+  margin-top: 1px;
 }
 
-.menu button:hover small {
+.menu button:hover small,
+.menu button:focus-visible small {
   color: rgba(255, 255, 255, 0.85);
+}
+
+.menu hr {
+  border: none;
+  border-top: 1px solid var(--separator);
+  margin: 5px 8px;
+}
+
+/* ---- Kurangi gerakan: tetap ada umpan balik, tanpa pindah posisi ------ */
+
+@media (prefers-reduced-motion: reduce) {
+  .shelf-item,
+  .shelf-divider-hit {
+    animation-name: fade-in;
+  }
+  .popover[data-state="closed"],
+  .menu[data-state="closed"] {
+    transform: none;
+  }
+  .seg-thumb {
+    transition-duration: 0ms;
+  }
+  .press:active:not(:disabled),
+  .capsule:active:not(:disabled),
+  .ghost:active:not(:disabled),
+  .tab-new:active:not(:disabled),
+  .shelf-add:active:not(:disabled),
+  .shelf-item:active .tile {
+    transform: none;
+  }
+}
+
+@keyframes fade-in {
+  from {
+    opacity: 0;
+  }
+}
+
+.menu-check {
+  display: inline-flex;
+  width: 14px;
+  flex-shrink: 0;
 }

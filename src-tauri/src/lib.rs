@@ -17,8 +17,11 @@ use docky_core::{
 use serde::Serialize;
 use tauri::menu::{Menu, MenuItem, PredefinedMenuItem};
 use tauri::tray::{MouseButton, MouseButtonState, TrayIconBuilder, TrayIconEvent};
-use tauri_plugin_notification::NotificationExt;
+use tauri::utils::config::WindowEffectsConfig;
+use tauri::window::{Effect, EffectState, EffectsBuilder};
 use tauri::{AppHandle, Emitter, LogicalSize, Manager, PhysicalPosition, WebviewUrl, WebviewWindow, WebviewWindowBuilder};
+use tauri_plugin_dialog::DialogExt;
+use tauri_plugin_notification::NotificationExt;
 
 use platform::{SystemApps, SystemDock};
 use updater::{UpdateState, UpdateStatus};
@@ -28,6 +31,8 @@ const SETTINGS: &str = "settings";
 const PANEL_WIDTH: f64 = 720.0;
 /// Jarak panel dari tepi atas dock, dalam poin.
 const PANEL_GAP: f64 = 10.0;
+/// Sudut panel, sama dengan Figma (Panel Docky · K1).
+const PANEL_RADIUS: f64 = 18.0;
 
 type SysEngine = Engine<SystemApps, SystemDock>;
 
@@ -218,7 +223,8 @@ fn app_status(app: AppHandle, state: tauri::State<'_, AppState>) -> Status {
 #[tauri::command]
 fn resize_panel(app: AppHandle, state: tauri::State<'_, AppState>, height: f64) -> CmdResult<()> {
     let Some(win) = app.get_webview_window(PANEL) else { return Ok(()) };
-    let height = height.clamp(60.0, 600.0);
+    // Tinggi bisa bertambah sampai ~600 pt saat popover Tambah app terbuka di atas panel.
+    let height = height.clamp(40.0, 900.0);
     if state.panel_moved.load(Ordering::SeqCst) {
         let pos = win.outer_position()?;
         let old_h = win.outer_size()?.height as i32;
@@ -256,6 +262,42 @@ fn hide_panel(app: AppHandle) -> CmdResult<()> {
         win.hide()?;
     }
     Ok(())
+}
+
+/// Kaca macOS (vibrancy) di belakang panel. Efeknya menutupi seluruh jendela,
+/// jadi dimatikan sementara saat popover Tambah app memperbesar jendela ke atas.
+#[tauri::command]
+fn set_panel_glass(app: AppHandle, on: bool) -> CmdResult<()> {
+    if let Some(win) = app.get_webview_window(PANEL) {
+        if on {
+            win.set_effects(panel_effects())?;
+        } else {
+            win.set_effects(None::<WindowEffectsConfig>)?;
+        }
+    }
+    Ok(())
+}
+
+/// "Telusuri…": pilih .app lewat jendela Finder, untuk app yang tidak ada di daftar.
+#[tauri::command]
+async fn pick_app(app: AppHandle) -> CmdResult<Option<InstalledApp>> {
+    let dialog = app.clone();
+    let picked = tauri::async_runtime::spawn_blocking(move || {
+        dialog
+            .dialog()
+            .file()
+            .set_title("Pilih app")
+            .add_filter("App", &["app"])
+            .set_directory("/Applications")
+            .blocking_pick_file()
+    })
+    .await
+    .map_err(|e| CmdError(e.to_string()))?;
+    let Some(path) = picked.and_then(|p| p.into_path().ok()) else { return Ok(None) };
+    let mut found = docky_core::scanner::read_bundle(&path)
+        .ok_or_else(|| CmdError(format!("{} bukan app yang bisa dipakai.", path.display())))?;
+    found.icon = icon_data_url(&found.path);
+    Ok(Some(found))
 }
 
 #[tauri::command]
@@ -298,6 +340,10 @@ fn install_update(app: AppHandle, state: tauri::State<'_, AppState>) -> CmdResul
 
 // ---- Jendela ----------------------------------------------------------
 
+fn panel_effects() -> WindowEffectsConfig {
+    EffectsBuilder::new().effect(Effect::Popover).state(EffectState::Active).radius(PANEL_RADIUS).build()
+}
+
 /// Letakkan panel di tengah bawah layar, tepat di atas dock. Area kerja
 /// (`work_area`) sudah tidak termasuk dock dan menu bar.
 fn position_panel(win: &WebviewWindow) -> tauri::Result<()> {
@@ -330,6 +376,10 @@ fn show_panel(app: &AppHandle) {
     let _ = win.show();
     let _ = win.set_focus();
     let _ = app.emit_to(PANEL, "panel-shown", ());
+    // Hanya satu yang tampil: panel atau Pengaturan.
+    if let Some(settings) = app.get_webview_window(SETTINGS) {
+        let _ = settings.close();
+    }
 }
 
 fn toggle_panel(app: &AppHandle) {
@@ -341,19 +391,40 @@ fn toggle_panel(app: &AppHandle) {
     }
 }
 
+/// Buka Pengaturan dan sembunyikan panel; saat Pengaturan ditutup, panel muncul lagi.
 fn show_settings(app: &AppHandle) -> tauri::Result<()> {
+    if let Some(panel) = app.get_webview_window(PANEL) {
+        let _ = panel.hide();
+    }
     if let Some(win) = app.get_webview_window(SETTINGS) {
         win.show()?;
         win.set_focus()?;
         return Ok(());
     }
-    let win = WebviewWindowBuilder::new(app, SETTINGS, WebviewUrl::App("settings.html".into()))
+    // Gaya macOS 26: bilah judul menyatu dengan isi, sidebar kaca (Figma S1–S6).
+    let builder = WebviewWindowBuilder::new(app, SETTINGS, WebviewUrl::App("settings.html".into()))
         .title("Pengaturan Docky")
         .inner_size(880.0, 760.0)
         .min_inner_size(780.0, 600.0)
-        .theme(Some(tauri::Theme::Dark))
-        .center()
-        .build()?;
+        .theme(Some(tauri::Theme::Light))
+        .transparent(true)
+        .effects(EffectsBuilder::new().effect(Effect::Sidebar).state(EffectState::Active).build())
+        .center();
+    #[cfg(target_os = "macos")]
+    let builder = builder
+        .title_bar_style(tauri::TitleBarStyle::Overlay)
+        .hidden_title(true)
+        .traffic_light_position(tauri::LogicalPosition::new(18.0, 14.0));
+    let win = builder.build()?;
+    let handle = app.clone();
+    win.on_window_event(move |event| {
+        if let tauri::WindowEvent::Destroyed = event {
+            let visible = handle.get_webview_window(PANEL).and_then(|p| p.is_visible().ok()).unwrap_or(true);
+            if !visible {
+                show_panel(&handle);
+            }
+        }
+    });
     win.set_focus()?;
     Ok(())
 }
@@ -421,6 +492,7 @@ pub fn run() {
     tauri::Builder::default()
         .plugin(tauri_plugin_updater::Builder::new().build())
         .plugin(tauri_plugin_notification::init())
+        .plugin(tauri_plugin_dialog::init())
         .manage(UpdateState::default())
         .setup(|app| {
             // Tanpa ikon di dock: Docky hanya muncul di menu bar.
@@ -470,6 +542,8 @@ pub fn run() {
             reset_panel_position,
             hide_panel,
             open_settings,
+            set_panel_glass,
+            pick_app,
             quit_app,
             notify,
             update_status,
