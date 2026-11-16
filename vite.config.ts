@@ -15,11 +15,12 @@ export default defineConfig({
   build: {
     target: "safari16",
     sourcemap: false,
-    // Dua jendela: panel (index.html) dan Pengaturan (settings.html).
+    // Tiga jendela: panel (index.html), Pengaturan (settings.html), dan popover Tambah app (picker.html).
     rollupOptions: {
       input: {
         panel: resolve(__dirname, "index.html"),
         settings: resolve(__dirname, "settings.html"),
+        picker: resolve(__dirname, "picker.html"),
       },
     },
   },

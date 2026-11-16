@@ -27,6 +27,8 @@ use updater::{UpdateState, UpdateStatus};
 
 const PANEL: &str = "panel";
 const SETTINGS: &str = "settings";
+/// Popover Tambah app sebagai jendela kecil sendiri di atas tombol + panel.
+const PICKER: &str = "picker";
 const PANEL_WIDTH: f64 = 720.0;
 /// Jarak panel dari tepi atas dock, dalam poin.
 const PANEL_GAP: f64 = 10.0;
@@ -43,6 +45,10 @@ struct AppState {
     /// tepi bawah, karena ukuran jendela dari sistem bisa belum diperbarui saat
     /// tinggi berubah beberapa kali berturut-turut (popover Tambah app).
     panel_height: Mutex<Option<i32>>,
+    /// Tengah dan tepi atas tombol + di layar (poin), untuk meletakkan popover.
+    picker_anchor: Mutex<Option<(f64, f64)>>,
+    /// Jendela Finder "Telusuri…" sedang terbuka: popover jangan ditutup saat kehilangan fokus.
+    picker_browsing: AtomicBool,
 }
 
 /// Galat yang dikirim ke tampilan sebagai teks.
@@ -267,6 +273,7 @@ fn reset_panel_position(app: AppHandle, state: tauri::State<'_, AppState>) -> Cm
 
 #[tauri::command]
 fn hide_panel(app: AppHandle) -> CmdResult<()> {
+    hide_picker_window(&app);
     if let Some(win) = app.get_webview_window(PANEL) {
         win.hide()?;
     }
@@ -288,11 +295,69 @@ async fn pick_app(app: AppHandle) -> CmdResult<Option<InstalledApp>> {
     })
     .await
     .map_err(|e| CmdError(e.to_string()))?;
+    // Kembalikan fokus ke popover setelah jendela Finder ditutup.
+    if let Some(picker) = app.get_webview_window(PICKER) {
+        if picker.is_visible().unwrap_or(false) {
+            let _ = picker.set_focus();
+        }
+    }
     let Some(path) = picked.and_then(|p| p.into_path().ok()) else { return Ok(None) };
     let mut found = docky_core::scanner::read_bundle(&path)
         .ok_or_else(|| CmdError(format!("{} bukan app yang bisa dipakai.", path.display())))?;
     found.icon = icon_data_url(&found.path);
     Ok(Some(found))
+}
+
+/// Buka popover Tambah app di atas tombol + (koordinat tombol relatif ke panel, dalam poin).
+/// Jendela popover mengukur dirinya lalu memanggil `show_picker`.
+#[tauri::command]
+fn open_picker(
+    app: AppHandle,
+    state: tauri::State<'_, AppState>,
+    preset_id: String,
+    x: f64,
+    y: f64,
+    width: f64,
+) -> CmdResult<()> {
+    let Some(panel) = app.get_webview_window(PANEL) else { return Ok(()) };
+    let scale = panel.scale_factor()?;
+    let pos = panel.inner_position()?.to_logical::<f64>(scale);
+    *state.picker_anchor.lock().unwrap() = Some((pos.x + x + width / 2.0, pos.y + y));
+    app.emit_to(PICKER, "picker-open", preset_id)?;
+    Ok(())
+}
+
+/// Letakkan jendela popover tepat di atas tombol + lalu tampilkan. Mengembalikan
+/// jarak tengah tombol dari tepi kiri jendela, untuk posisi panah.
+#[tauri::command]
+fn show_picker(app: AppHandle, state: tauri::State<'_, AppState>, width: f64, height: f64) -> CmdResult<f64> {
+    let Some(win) = app.get_webview_window(PICKER) else { return Ok(width / 2.0) };
+    let Some((center, top)) = *state.picker_anchor.lock().unwrap() else { return Ok(width / 2.0) };
+    let mut left = center - width / 2.0;
+    if let Some(monitor) = app.get_webview_window(PANEL).and_then(|p| p.current_monitor().ok().flatten()) {
+        let scale = monitor.scale_factor();
+        let area = monitor.work_area();
+        let min = area.position.x as f64 / scale + 4.0;
+        let max = (area.position.x as f64 + area.size.width as f64) / scale - width - 4.0;
+        left = left.min(max).max(min);
+    }
+    win.set_size(LogicalSize::new(width, height))?;
+    // Panah menunjuk tepat ke tepi atas tombol; jendela sedikit menumpang di atasnya.
+    win.set_position(tauri::LogicalPosition::new(left, top + 4.0 - height))?;
+    win.show()?;
+    win.set_focus()?;
+    let _ = app.emit_to(PANEL, "picker-opened", ());
+    Ok(center - left)
+}
+
+#[tauri::command]
+fn hide_picker(app: AppHandle) {
+    hide_picker_window(&app);
+}
+
+#[tauri::command]
+fn set_picker_browsing(state: tauri::State<'_, AppState>, on: bool) {
+    state.picker_browsing.store(on, Ordering::SeqCst);
 }
 
 #[tauri::command]
@@ -360,6 +425,15 @@ fn position_panel_sized(win: &WebviewWindow, width: i32, height: i32) -> tauri::
     win.set_position(PhysicalPosition::new(x, y))
 }
 
+fn hide_picker_window(app: &AppHandle) {
+    let Some(win) = app.get_webview_window(PICKER) else { return };
+    if win.is_visible().unwrap_or(false) {
+        let _ = win.hide();
+        let _ = app.emit_to(PICKER, "picker-hidden", ());
+        let _ = app.emit_to(PANEL, "picker-closed", ());
+    }
+}
+
 fn show_panel(app: &AppHandle) {
     let Some(win) = app.get_webview_window(PANEL) else { return };
     let state = app.state::<AppState>();
@@ -383,6 +457,7 @@ fn show_panel(app: &AppHandle) {
 fn toggle_panel(app: &AppHandle) {
     let Some(win) = app.get_webview_window(PANEL) else { return };
     if win.is_visible().unwrap_or(false) {
+        hide_picker_window(app);
         let _ = win.hide();
     } else {
         show_panel(app);
@@ -391,6 +466,7 @@ fn toggle_panel(app: &AppHandle) {
 
 /// Buka Pengaturan dan sembunyikan panel; saat Pengaturan ditutup, panel muncul lagi.
 fn show_settings(app: &AppHandle) -> tauri::Result<()> {
+    hide_picker_window(app);
     if let Some(panel) = app.get_webview_window(PANEL) {
         let _ = panel.hide();
     }
@@ -510,7 +586,22 @@ pub fn run() {
                 icons: Mutex::new(HashMap::new()),
                 panel_moved: AtomicBool::new(false),
                 panel_height: Mutex::new(None),
+                picker_anchor: Mutex::new(None),
+                picker_browsing: AtomicBool::new(false),
             });
+
+            // Popover Tambah app tertutup saat pengguna mengklik di luarnya,
+            // kecuali selama jendela Finder "Telusuri…" terbuka.
+            if let Some(picker) = app.get_webview_window(PICKER) {
+                let h = handle.clone();
+                picker.on_window_event(move |event| {
+                    if let tauri::WindowEvent::Focused(false) = event {
+                        if !h.state::<AppState>().picker_browsing.load(Ordering::SeqCst) {
+                            hide_picker_window(&h);
+                        }
+                    }
+                });
+            }
 
             build_tray(&handle)?;
             // Docky hanya terhubung ke internet untuk mengecek update.
@@ -542,6 +633,10 @@ pub fn run() {
             hide_panel,
             open_settings,
             pick_app,
+            open_picker,
+            show_picker,
+            hide_picker,
+            set_picker_browsing,
             quit_app,
             notify,
             update_status,

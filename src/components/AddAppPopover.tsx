@@ -5,19 +5,10 @@ import { usePresence } from "../hooks";
 import { AppTile } from "./AppTile";
 import { Icon } from "./Icon";
 
-const WIDTH = 360;
+export const POPOVER_WIDTH = 360;
 const GAP = 10;
 
-interface Props {
-  open: boolean;
-  /** Tombol yang membuka popover; panah menunjuk ke sini. */
-  anchor: HTMLElement | null;
-  /** Elemen `position: relative` tempat popover diletakkan. */
-  container: HTMLElement | null;
-  /** "up": selalu di atas tombol (panel di atas dock). "auto": di atas kalau muat. */
-  placement?: "up" | "auto";
-  /** Ubah nilai ini setelah tata letak berubah supaya posisi dihitung ulang. */
-  layoutKey?: unknown;
+interface BodyProps {
   title: string;
   apps: InstalledApp[];
   exclude: Set<string>;
@@ -26,26 +17,22 @@ interface Props {
   onSpacer?: () => void;
   onClose: () => void;
   onError?: (message: string) => void;
-  /** Tinggi popover, untuk memberi ruang di atas panel. */
-  onHeight?: (h: number) => void;
-  /** Tahan tetap tersembunyi (misalnya selama jendela panel diperbesar). */
-  hold?: boolean;
+  /** Berubah setiap kali dibuka: kosongkan pencarian dan fokus ke kolom cari. */
+  openKey: unknown;
+  /** Dipanggil sebelum dan sesudah jendela Finder "Telusuri…". */
+  onBrowse?: (active: boolean) => void;
 }
 
 /**
- * Popover Tambah app (Figma S5/S6): judul, daftar app, opsi pemisah, lalu kolom
- * cari dan Telusuri… paling bawah, dekat tombol yang membukanya.
+ * Isi popover Tambah app (Figma S5/S6): judul, daftar app, opsi pemisah, lalu
+ * kolom cari dan Telusuri… paling bawah, dekat tombol yang membukanya.
  */
-export function AddAppPopover(props: Props) {
-  const { open, anchor, container, placement = "auto", layoutKey, title, apps, exclude, onPick, onSpacer, onClose } = props;
-  const { mounted, state } = usePresence(open, 150);
-  const ref = useRef<HTMLDivElement>(null);
+export function AddAppBody({ title, apps, exclude, onPick, onSpacer, onClose, onError, openKey, onBrowse }: BodyProps) {
   const listRef = useRef<HTMLUListElement>(null);
   const inputRef = useRef<HTMLInputElement>(null);
   const [query, setQuery] = useState("");
   /** Baris yang disorot; -1 = belum ada (sorotan muncul saat mengetik, panah, atau kursor). */
   const [hi, setHi] = useState(-1);
-  const [pos, setPos] = useState<{ left: number; top: number; arrow: number; up: boolean } | null>(null);
 
   const list = useMemo(() => {
     const q = query.trim().toLowerCase();
@@ -56,52 +43,13 @@ export function AddAppPopover(props: Props) {
 
   useEffect(() => setHi(query.trim() ? 0 : -1), [query]);
   useEffect(() => {
-    if (open) {
-      setQuery("");
-      requestAnimationFrame(() => inputRef.current?.focus());
-    }
-  }, [open]);
-
-  // Posisi: tengah popover di tengah tombol, panah selalu tepat ke tombol.
-  useLayoutEffect(() => {
-    if (!mounted || !anchor || !container || !ref.current) return;
-    const measure = () => {
-      if (!ref.current) return;
-      const c = container.getBoundingClientRect();
-      const a = anchor.getBoundingClientRect();
-      const h = ref.current.offsetHeight;
-      props.onHeight?.(h);
-      const cx = a.left - c.left + a.width / 2;
-      const left = Math.round(Math.max(8, Math.min(c.width - WIDTH - 8, cx - WIDTH / 2)));
-      const aboveTop = a.top - c.top - h - GAP;
-      const up = placement === "up" || aboveTop >= 8;
-      const top = Math.round(up ? aboveTop : a.bottom - c.top + GAP);
-      setPos({ left, top, arrow: Math.round(cx - left), up });
-    };
-    measure();
-    const ro = new ResizeObserver(measure);
-    ro.observe(container);
-    ro.observe(ref.current);
-    return () => ro.disconnect();
-  }, [mounted, anchor, container, placement, layoutKey]);
-
-  // Tutup saat klik di luar (kecuali tombol pembukanya, yang menutup sendiri).
-  useEffect(() => {
-    if (!open) return;
-    const onDown = (e: MouseEvent) => {
-      const t = e.target as Node;
-      if (ref.current?.contains(t) || anchor?.contains(t)) return;
-      onClose();
-    };
-    document.addEventListener("mousedown", onDown);
-    return () => document.removeEventListener("mousedown", onDown);
-  }, [open, anchor, onClose]);
-
+    setQuery("");
+    if (listRef.current) listRef.current.scrollTop = 0;
+    requestAnimationFrame(() => inputRef.current?.focus());
+  }, [openKey]);
   useEffect(() => {
     listRef.current?.querySelector(".hl")?.scrollIntoView({ block: "nearest" });
   }, [hi]);
-
-  if (!mounted) return null;
 
   const pick = (app: InstalledApp) => {
     onPick(app);
@@ -110,11 +58,15 @@ export function AddAppPopover(props: Props) {
   };
 
   const browse = async () => {
+    onBrowse?.(true);
     try {
       const app = await api.pickApp();
       if (app) pick(app);
     } catch (e) {
-      props.onError?.(errorMessage(e));
+      onError?.(errorMessage(e));
+    } finally {
+      onBrowse?.(false);
+      inputRef.current?.focus();
     }
   };
 
@@ -134,18 +86,8 @@ export function AddAppPopover(props: Props) {
     }
   };
 
-  const style = {
-    width: WIDTH,
-    left: pos?.left ?? 0,
-    top: pos?.top ?? 0,
-    visibility: pos ? "visible" : "hidden",
-    "--arrow-x": `${pos?.arrow ?? WIDTH / 2}px`,
-    "--origin-x": `${pos?.arrow ?? WIDTH / 2}px`,
-    "--origin-y": pos?.up === false ? "0%" : "100%",
-  } as CSSProperties;
-
-  const node = (
-    <div className="popover add-pop" ref={ref} data-state={props.hold ? "closed" : state} style={style} role="dialog" aria-label={title} onKeyDown={onKeyDown}>
+  return (
+    <div className="add-body" onKeyDown={onKeyDown}>
       <div className="add-head">
         <span>{title}</span>
         <span className="subtle">Esc untuk tutup</span>
@@ -178,21 +120,97 @@ export function AddAppPopover(props: Props) {
       <div className="add-search">
         <label className="search-field">
           <Icon name="search" size={13} />
-          <input
-            ref={inputRef}
-            placeholder="Cari app"
-            value={query}
-            onChange={(e) => setQuery(e.target.value)}
-            aria-label="Cari app"
-          />
+          <input ref={inputRef} placeholder="Cari app" value={query} onChange={(e) => setQuery(e.target.value)} aria-label="Cari app" />
         </label>
         <button className="capsule small" onClick={browse} title="Pilih app lewat Finder">
           Telusuri…
         </button>
       </div>
-      <svg className={`popover-arrow ${pos?.up === false ? "up" : "down"}`} viewBox="0 0 20 10" aria-hidden>
-        <path d="M0 0 L20 0 L11.4 8.4 Q10 9.6 8.6 8.4 Z" fill="rgb(247 247 248 / 0.96)" />
-      </svg>
+    </div>
+  );
+}
+
+/** Panah popover; `up` = popover di bawah tombol. */
+export function PopoverArrow({ up }: { up?: boolean }) {
+  return (
+    <svg className={`popover-arrow ${up ? "up" : "down"}`} viewBox="0 0 20 10" aria-hidden>
+      <path d="M0 0 L20 0 L11.4 8.4 Q10 9.6 8.6 8.4 Z" fill="rgb(247 247 248 / 0.96)" />
+    </svg>
+  );
+}
+
+interface Props extends Omit<BodyProps, "openKey" | "onBrowse"> {
+  open: boolean;
+  /** Tombol yang membuka popover; panah menunjuk ke sini. */
+  anchor: HTMLElement | null;
+  /** Elemen `position: relative` tempat popover diletakkan. */
+  container: HTMLElement | null;
+  /** "up": selalu di atas tombol. "auto": di atas kalau muat. */
+  placement?: "up" | "auto";
+  /** Ubah nilai ini setelah tata letak berubah supaya posisi dihitung ulang. */
+  layoutKey?: unknown;
+  /** Tinggi popover, untuk memberi ruang di atas isi. */
+  onHeight?: (h: number) => void;
+}
+
+/** Popover Tambah app di dalam jendela yang sama (Pengaturan, pratinjau browser). */
+export function AddAppPopover(props: Props) {
+  const { open, anchor, container, placement = "auto", layoutKey, onClose } = props;
+  const { mounted, state } = usePresence(open, 150);
+  const ref = useRef<HTMLDivElement>(null);
+  const [pos, setPos] = useState<{ left: number; top: number; arrow: number; up: boolean } | null>(null);
+
+  // Posisi: tengah popover di tengah tombol, panah selalu tepat ke tombol.
+  useLayoutEffect(() => {
+    if (!mounted || !anchor || !container || !ref.current) return;
+    const measure = () => {
+      if (!ref.current) return;
+      const c = container.getBoundingClientRect();
+      const a = anchor.getBoundingClientRect();
+      const h = ref.current.offsetHeight;
+      props.onHeight?.(h);
+      const cx = a.left - c.left + a.width / 2;
+      const left = Math.round(Math.max(8, Math.min(c.width - POPOVER_WIDTH - 8, cx - POPOVER_WIDTH / 2)));
+      const aboveTop = a.top - c.top - h - GAP;
+      const up = placement === "up" || aboveTop >= 8;
+      const top = Math.round(up ? aboveTop : a.bottom - c.top + GAP);
+      setPos({ left, top, arrow: Math.round(cx - left), up });
+    };
+    measure();
+    const ro = new ResizeObserver(measure);
+    ro.observe(container);
+    ro.observe(ref.current);
+    return () => ro.disconnect();
+  }, [mounted, anchor, container, placement, layoutKey]);
+
+  // Tutup saat klik di luar (kecuali tombol pembukanya, yang menutup sendiri).
+  useEffect(() => {
+    if (!open) return;
+    const onDown = (e: MouseEvent) => {
+      const t = e.target as Node;
+      if (ref.current?.contains(t) || anchor?.contains(t)) return;
+      onClose();
+    };
+    document.addEventListener("mousedown", onDown);
+    return () => document.removeEventListener("mousedown", onDown);
+  }, [open, anchor, onClose]);
+
+  if (!mounted) return null;
+
+  const style = {
+    width: POPOVER_WIDTH,
+    left: pos?.left ?? 0,
+    top: pos?.top ?? 0,
+    visibility: pos ? "visible" : "hidden",
+    "--arrow-x": `${pos?.arrow ?? POPOVER_WIDTH / 2}px`,
+    "--origin-x": `${pos?.arrow ?? POPOVER_WIDTH / 2}px`,
+    "--origin-y": pos?.up === false ? "0%" : "100%",
+  } as CSSProperties;
+
+  const node = (
+    <div className="popover" ref={ref} data-state={state} style={style} role="dialog" aria-label={props.title}>
+      <AddAppBody {...props} openKey={open} />
+      <PopoverArrow up={pos?.up === false} />
     </div>
   );
   // Dipasang langsung di container supaya posisinya tidak bergeser oleh induk lain.

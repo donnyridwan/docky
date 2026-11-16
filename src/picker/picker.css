@@ -1,0 +1,26 @@
+/* Jendela popover Tambah app: transparan, hanya kotak popover yang terlihat. */
+
+html,
+body,
+#root {
+  overflow: hidden;
+}
+
+.picker-wrap {
+  display: inline-block;
+  /* Ruang untuk bayangan; bawahnya sempit karena panah menunjuk ke tombol +. */
+  padding: 20px 20px 14px;
+}
+
+.picker-pop {
+  position: relative;
+  box-shadow:
+    0 0 0 0.5px rgba(0, 0, 0, 0.14),
+    inset 0 0 0 1px rgba(255, 255, 255, 0.7),
+    0 4px 16px rgba(0, 0, 0, 0.16);
+}
+
+/* Tinggi tetap supaya ukuran jendela tidak berubah setelah tampil. */
+.picker-pop .add-list {
+  height: 279px;
+}

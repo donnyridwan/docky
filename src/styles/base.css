@@ -710,7 +710,7 @@ input {
 }
 
 /* Isi popover Tambah app (Figma S5/S6). */
-.add-pop {
+.add-body {
   display: flex;
   flex-direction: column;
   gap: 8px;

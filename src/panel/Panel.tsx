@@ -55,8 +55,8 @@ export function Panel() {
   const [addAnchor, setAddAnchor] = useState<HTMLElement | null>(null);
   const [popHeight, setPopHeight] = useState(0);
   const [space, setSpace] = useState(0);
-  /** Jendela sudah cukup tinggi untuk popover; baru setelah itu popover muncul. */
-  const [popReady, setPopReady] = useState(false);
+  /** Saat popover ditutup karena klik di luar, termasuk klik pada tombol + itu sendiri. */
+  const pickerClosedAt = useRef(0);
   const rootRef = useRef<HTMLDivElement>(null);
   const panelRef = useRef<HTMLDivElement>(null);
   const addBtnRef = useRef<HTMLButtonElement>(null);
@@ -105,28 +105,31 @@ export function Panel() {
     return () => ro.disconnect();
   }, []);
 
-  // Ruang di atas panel untuk popover Tambah app. Ruang dilepas setelah animasi keluar.
-  // Urutannya: ukur popover (masih tersembunyi), perbesar jendela ke atas, tunggu
-  // Rust selesai, baru popover muncul. Tanpa ini popover sempat terpotong (berkedip).
+  // Di app, popover Tambah app adalah jendela sendiri (src/picker); panel hanya
+  // mengikuti apakah popover terbuka, supaya tombol + tampak aktif.
+  useEffect(() => {
+    if (!isTauri) return;
+    const offOpened = on("picker-opened", () => setAdding(true));
+    const offClosed = on("picker-closed", () => {
+      setAdding(false);
+      pickerClosedAt.current = performance.now();
+    });
+    return () => {
+      offOpened();
+      offClosed();
+    };
+  }, []);
+
+  // Pratinjau browser: popover di dalam halaman, dengan ruang di atas panel.
   useLayoutEffect(() => {
+    if (isTauri) return;
     if (!adding) {
-      setPopReady(false);
       const t = setTimeout(() => setSpace(0), 160);
       return () => clearTimeout(t);
     }
     if (!addAnchor || !panelRef.current || popHeight === 0) return;
-    const panel = panelRef.current.getBoundingClientRect();
-    const tileTop = addAnchor.getBoundingClientRect().top - panel.top;
-    const next = Math.max(0, Math.ceil(popHeight + 14 - tileTop));
-    setSpace(next);
-    let cancelled = false;
-    api
-      .resizePanel(Math.ceil(panel.height + next))
-      .catch(() => {})
-      .then(() => requestAnimationFrame(() => !cancelled && setPopReady(true)));
-    return () => {
-      cancelled = true;
-    };
+    const tileTop = addAnchor.getBoundingClientRect().top - panelRef.current.getBoundingClientRect().top;
+    setSpace(Math.max(0, Math.ceil(popHeight + 14 - tileTop)));
   }, [adding, addAnchor, popHeight]);
 
   useEffect(() => {
@@ -141,9 +144,14 @@ export function Panel() {
   const showWelcome = settings !== null && !settings.welcome_seen && view.kind === "dock";
   const ordered = useMemo(() => (selected ? sortedApps(selected) : []), [selected]);
 
+  const closeAdd = useCallback(() => {
+    setAdding(false);
+    if (isTauri) api.hidePicker().catch(() => {});
+  }, []);
+
   const select = (p: Preset) => {
     if (busy || !settings) return;
-    setAdding(false);
+    closeAdd();
     saveSettings({ ...settings, selected_preset: p.id });
     setView({ kind: "dock" });
   };
@@ -188,7 +196,7 @@ export function Panel() {
 
   const run = async () => {
     if (!selected || busy) return;
-    setAdding(false);
+    closeAdd();
     setView({ kind: "running", mode: selected.mode, progress: null });
     try {
       const summary = await api.runPreset(selected.id);
@@ -253,10 +261,7 @@ export function Panel() {
       } else {
         // Preset kosong: langsung buka Tambah app.
         setTimeout(() => {
-          if (addBtnRef.current) {
-            setAddAnchor(addBtnRef.current);
-            setAdding(true);
-          }
+          if (addBtnRef.current) openAdd(addBtnRef.current, created.id);
         }, 60);
       }
     } catch (e) {
@@ -327,13 +332,22 @@ export function Panel() {
     ]);
   };
 
-  const toggleAdd = (anchor: HTMLElement) => {
-    if (busy) return;
+  const openAdd = (anchor: HTMLElement, presetId: string) => {
     setAddAnchor(anchor);
-    setAdding((a) => !a);
+    setAdding(true);
+    if (isTauri) {
+      const r = anchor.getBoundingClientRect();
+      api.openPicker(presetId, r.left, r.top, r.width).catch(() => setAdding(false));
+    }
   };
 
-  const closeAdd = useCallback(() => setAdding(false), []);
+  const toggleAdd = (anchor: HTMLElement) => {
+    if (busy || !selected) return;
+    if (adding) return closeAdd();
+    // Klik pada + saat popover terbuka: popover sudah tertutup karena kehilangan fokus.
+    if (isTauri && performance.now() - pickerClosedAt.current < 300) return;
+    openAdd(anchor, selected.id);
+  };
   const closeHtmlMenu = useCallback(() => setHtmlMenu(null), []);
 
   const finishWelcome = async (createFromCurrent: boolean) => {
@@ -494,12 +508,11 @@ export function Panel() {
       </div>
 
       <AddAppPopover
-        open={adding && !!selected}
+        open={!isTauri && adding && !!selected}
         anchor={addAnchor}
         container={root}
         placement="up"
         layoutKey={space}
-        hold={!popReady}
         title={selected ? `Tambah app ke “${selected.name}”` : "Tambah app"}
         apps={installed}
         exclude={new Set(selected?.apps.map((a) => a.bundle_id) ?? [])}

@@ -170,6 +170,11 @@ export const api = {
   hidePanel: () => call<void>("hide_panel"),
   openSettings: () => call<void>("open_settings"),
   pickApp: () => call<InstalledApp | null>("pick_app"),
+  openPicker: (presetId: string, x: number, y: number, width: number) =>
+    call<void>("open_picker", { presetId, x, y, width }),
+  showPicker: (width: number, height: number) => call<number>("show_picker", { width, height }),
+  hidePicker: () => call<void>("hide_picker"),
+  setPickerBrowsing: (on: boolean) => call<void>("set_picker_browsing", { on }),
   quit: () => call<void>("quit_app"),
   notify: (title: string, body: string) => call<void>("notify", { title, body }),
   updateStatus: () => call<UpdateStatus>("update_status"),
@@ -351,6 +356,8 @@ async function mock(cmd: string, args: Record<string, unknown> = {}): Promise<un
       return demoUpdate;
     case "install_update":
       return undefined;
+    case "show_picker":
+      return (args.width as number) / 2;
     case "pick_app":
       return { bundle_id: "com.apple.Notes", name: "Notes", path: "/System/Applications/Notes.app" };
     case "notify":
