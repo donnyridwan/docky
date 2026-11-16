@@ -28,6 +28,8 @@ interface Props {
   onError?: (message: string) => void;
   /** Tinggi popover, untuk memberi ruang di atas panel. */
   onHeight?: (h: number) => void;
+  /** Tahan tetap tersembunyi (misalnya selama jendela panel diperbesar). */
+  hold?: boolean;
 }
 
 /**
@@ -143,7 +145,7 @@ export function AddAppPopover(props: Props) {
   } as CSSProperties;
 
   const node = (
-    <div className="popover add-pop" ref={ref} data-state={state} style={style} role="dialog" aria-label={title} onKeyDown={onKeyDown}>
+    <div className="popover add-pop" ref={ref} data-state={props.hold ? "closed" : state} style={style} role="dialog" aria-label={title} onKeyDown={onKeyDown}>
       <div className="add-head">
         <span>{title}</span>
         <span className="subtle">Esc untuk tutup</span>

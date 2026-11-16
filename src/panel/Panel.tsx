@@ -55,7 +55,8 @@ export function Panel() {
   const [addAnchor, setAddAnchor] = useState<HTMLElement | null>(null);
   const [popHeight, setPopHeight] = useState(0);
   const [space, setSpace] = useState(0);
-  const [solid, setSolid] = useState(false);
+  /** Jendela sudah cukup tinggi untuk popover; baru setelah itu popover muncul. */
+  const [popReady, setPopReady] = useState(false);
   const rootRef = useRef<HTMLDivElement>(null);
   const panelRef = useRef<HTMLDivElement>(null);
   const addBtnRef = useRef<HTMLButtonElement>(null);
@@ -105,22 +106,28 @@ export function Panel() {
   }, []);
 
   // Ruang di atas panel untuk popover Tambah app. Ruang dilepas setelah animasi keluar.
+  // Urutannya: ukur popover (masih tersembunyi), perbesar jendela ke atas, tunggu
+  // Rust selesai, baru popover muncul. Tanpa ini popover sempat terpotong (berkedip).
   useLayoutEffect(() => {
     if (!adding) {
+      setPopReady(false);
       const t = setTimeout(() => setSpace(0), 160);
       return () => clearTimeout(t);
     }
-    if (!addAnchor || !panelRef.current) return;
-    const tileTop = addAnchor.getBoundingClientRect().top - panelRef.current.getBoundingClientRect().top;
-    setSpace(Math.max(0, Math.ceil(popHeight + 14 - tileTop)));
+    if (!addAnchor || !panelRef.current || popHeight === 0) return;
+    const panel = panelRef.current.getBoundingClientRect();
+    const tileTop = addAnchor.getBoundingClientRect().top - panel.top;
+    const next = Math.max(0, Math.ceil(popHeight + 14 - tileTop));
+    setSpace(next);
+    let cancelled = false;
+    api
+      .resizePanel(Math.ceil(panel.height + next))
+      .catch(() => {})
+      .then(() => requestAnimationFrame(() => !cancelled && setPopReady(true)));
+    return () => {
+      cancelled = true;
+    };
   }, [adding, addAnchor, popHeight]);
-
-  // Kaca macOS menutupi seluruh jendela; matikan selama ada ruang transparan di atas panel.
-  useEffect(() => {
-    const off = space > 0;
-    setSolid(off);
-    api.setPanelGlass(!off).catch(() => {});
-  }, [space > 0]);
 
   useEffect(() => {
     if (warning) {
@@ -351,7 +358,7 @@ export function Panel() {
       }}
       style={{ paddingTop: space }}
     >
-      <div className={`panel${solid ? " solid" : ""}${collapsed ? " collapsed" : ""}`} ref={panelRef}>
+      <div className={`panel${collapsed ? " collapsed" : ""}`} ref={panelRef}>
         <header
           className="strip"
           title="Seret untuk memindahkan panel. Klik dua kali untuk kembali ke atas dock."
@@ -492,6 +499,7 @@ export function Panel() {
         container={root}
         placement="up"
         layoutKey={space}
+        hold={!popReady}
         title={selected ? `Tambah app ke “${selected.name}”` : "Tambah app"}
         apps={installed}
         exclude={new Set(selected?.apps.map((a) => a.bundle_id) ?? [])}

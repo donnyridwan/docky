@@ -169,7 +169,6 @@ export const api = {
   resetPanelPosition: () => call<void>("reset_panel_position"),
   hidePanel: () => call<void>("hide_panel"),
   openSettings: () => call<void>("open_settings"),
-  setPanelGlass: (on: boolean) => call<void>("set_panel_glass", { on }),
   pickApp: () => call<InstalledApp | null>("pick_app"),
   quit: () => call<void>("quit_app"),
   notify: (title: string, body: string) => call<void>("notify", { title, body }),

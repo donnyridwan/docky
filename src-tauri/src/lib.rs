@@ -17,7 +17,6 @@ use docky_core::{
 use serde::Serialize;
 use tauri::menu::{Menu, MenuItem, PredefinedMenuItem};
 use tauri::tray::{MouseButton, MouseButtonState, TrayIconBuilder, TrayIconEvent};
-use tauri::utils::config::WindowEffectsConfig;
 use tauri::window::{Effect, EffectState, EffectsBuilder};
 use tauri::{AppHandle, Emitter, LogicalSize, Manager, PhysicalPosition, WebviewUrl, WebviewWindow, WebviewWindowBuilder};
 use tauri_plugin_dialog::DialogExt;
@@ -31,8 +30,6 @@ const SETTINGS: &str = "settings";
 const PANEL_WIDTH: f64 = 720.0;
 /// Jarak panel dari tepi atas dock, dalam poin.
 const PANEL_GAP: f64 = 10.0;
-/// Sudut panel, sama dengan Figma (Panel Docky · K1).
-const PANEL_RADIUS: f64 = 18.0;
 
 type SysEngine = Engine<SystemApps, SystemDock>;
 
@@ -276,20 +273,6 @@ fn hide_panel(app: AppHandle) -> CmdResult<()> {
     Ok(())
 }
 
-/// Kaca macOS (vibrancy) di belakang panel. Efeknya menutupi seluruh jendela,
-/// jadi dimatikan sementara saat popover Tambah app memperbesar jendela ke atas.
-#[tauri::command]
-fn set_panel_glass(app: AppHandle, on: bool) -> CmdResult<()> {
-    if let Some(win) = app.get_webview_window(PANEL) {
-        if on {
-            win.set_effects(panel_effects())?;
-        } else {
-            win.set_effects(None::<WindowEffectsConfig>)?;
-        }
-    }
-    Ok(())
-}
-
 /// "Telusuri…": pilih .app lewat jendela Finder, untuk app yang tidak ada di daftar.
 #[tauri::command]
 async fn pick_app(app: AppHandle) -> CmdResult<Option<InstalledApp>> {
@@ -352,9 +335,6 @@ fn install_update(app: AppHandle, state: tauri::State<'_, AppState>) -> CmdResul
 
 // ---- Jendela ----------------------------------------------------------
 
-fn panel_effects() -> WindowEffectsConfig {
-    EffectsBuilder::new().effect(Effect::Popover).state(EffectState::Active).radius(PANEL_RADIUS).build()
-}
 
 /// Letakkan panel di tengah bawah layar, tepat di atas dock. Area kerja
 /// (`work_area`) sudah tidak termasuk dock dan menu bar.
@@ -561,7 +541,6 @@ pub fn run() {
             reset_panel_position,
             hide_panel,
             open_settings,
-            set_panel_glass,
             pick_app,
             quit_app,
             notify,
