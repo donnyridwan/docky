@@ -42,6 +42,10 @@ struct AppState {
     /// Panel sudah diseret pengguna: jangan pindahkan lagi ke atas dock
     /// sampai pengguna memilih "Kembalikan ke atas dock".
     panel_moved: AtomicBool,
+    /// Tinggi panel terakhir yang diminta (piksel fisik). Dipakai sebagai acuan
+    /// tepi bawah, karena ukuran jendela dari sistem bisa belum diperbarui saat
+    /// tinggi berubah beberapa kali berturut-turut (popover Tambah app).
+    panel_height: Mutex<Option<i32>>,
 }
 
 /// Galat yang dikirim ke tampilan sebagai teks.
@@ -225,16 +229,24 @@ fn resize_panel(app: AppHandle, state: tauri::State<'_, AppState>, height: f64) 
     let Some(win) = app.get_webview_window(PANEL) else { return Ok(()) };
     // Tinggi bisa bertambah sampai ~600 pt saat popover Tambah app terbuka di atas panel.
     let height = height.clamp(40.0, 900.0);
+    let scale = win.scale_factor()?;
+    let new_h = (height * scale).round() as i32;
+    let mut last = state.panel_height.lock().unwrap();
+    if *last == Some(new_h) {
+        return Ok(());
+    }
     if state.panel_moved.load(Ordering::SeqCst) {
+        // Tepi bawah tetap, panel tumbuh ke atas.
         let pos = win.outer_position()?;
-        let old_h = win.outer_size()?.height as i32;
-        let new_h = (height * win.scale_factor()?).round() as i32;
+        let old_h = last.unwrap_or(win.outer_size()?.height as i32);
         win.set_size(LogicalSize::new(PANEL_WIDTH, height))?;
         win.set_position(PhysicalPosition::new(pos.x, pos.y + old_h - new_h))?;
     } else {
         win.set_size(LogicalSize::new(PANEL_WIDTH, height))?;
-        position_panel(&win)?;
+        let width = (PANEL_WIDTH * scale).round() as i32;
+        position_panel_sized(&win, width, new_h)?;
     }
+    *last = Some(new_h);
     Ok(())
 }
 
@@ -347,6 +359,13 @@ fn panel_effects() -> WindowEffectsConfig {
 /// Letakkan panel di tengah bawah layar, tepat di atas dock. Area kerja
 /// (`work_area`) sudah tidak termasuk dock dan menu bar.
 fn position_panel(win: &WebviewWindow) -> tauri::Result<()> {
+    let size = win.outer_size()?;
+    position_panel_sized(win, size.width as i32, size.height as i32)
+}
+
+/// Sama dengan `position_panel`, dengan ukuran jendela yang diketahui
+/// (ukuran dari sistem bisa tertinggal sesaat setelah `set_size`).
+fn position_panel_sized(win: &WebviewWindow, width: i32, height: i32) -> tauri::Result<()> {
     let monitor = match win.current_monitor()? {
         Some(m) => m,
         None => match win.primary_monitor()? {
@@ -355,10 +374,9 @@ fn position_panel(win: &WebviewWindow) -> tauri::Result<()> {
         },
     };
     let area = monitor.work_area();
-    let size = win.outer_size()?;
     let gap = (PANEL_GAP * monitor.scale_factor()).round() as i32;
-    let x = area.position.x + (area.size.width as i32 - size.width as i32) / 2;
-    let y = area.position.y + area.size.height as i32 - size.height as i32 - gap;
+    let x = area.position.x + (area.size.width as i32 - width) / 2;
+    let y = area.position.y + area.size.height as i32 - height - gap;
     win.set_position(PhysicalPosition::new(x, y))
 }
 
@@ -511,6 +529,7 @@ pub fn run() {
                 engine: Arc::new(engine),
                 icons: Mutex::new(HashMap::new()),
                 panel_moved: AtomicBool::new(false),
+                panel_height: Mutex::new(None),
             });
 
             build_tray(&handle)?;

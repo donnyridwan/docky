@@ -99,7 +99,8 @@ export function Panel() {
     const ro = new ResizeObserver(() => {
       api.resizePanel(Math.ceil(el.getBoundingClientRect().height)).catch(() => {});
     });
-    ro.observe(el);
+    // border-box: ruang popover dibuat dengan padding-top, yang tidak terhitung di content-box.
+    ro.observe(el, { box: "border-box" });
     return () => ro.disconnect();
   }, []);
 
