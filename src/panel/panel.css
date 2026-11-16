@@ -12,7 +12,7 @@ body {
   flex-direction: column;
   width: 720px;
   /* Sedikit tembus pandang supaya efek blur macOS di belakang jendela terasa. */
-  background: var(--bg-field);
+  background: color-mix(in srgb, var(--bg-panel) 97%, transparent);
   border: 1px solid var(--stroke-outline);
   border-radius: var(--radius-panel);
   overflow: visible;
@@ -22,135 +22,16 @@ body {
 
 .panel-header {
   display: flex;
-  align-items: flex-end;
-  gap: 0;
-  height: 40px;
-  padding: 10px 12px 0;
+  align-items: center;
+  gap: 10px;
+  height: 34px;
+  padding: 0 12px;
   background: var(--bg-header);
+  border-bottom: 1px solid var(--stroke-outline);
   border-radius: calc(var(--radius-panel) - 1px) calc(var(--radius-panel) - 1px) 0 0;
   flex-shrink: 0;
   /* Bagian kosong header = pegangan untuk menyeret panel. */
   cursor: grab;
-}
-
-.header-lead,
-.header-trail {
-  display: flex;
-  align-items: center;
-  gap: 10px;
-  height: 30px;
-  flex-shrink: 0;
-}
-
-.header-lead {
-  padding-right: 6px;
-}
-
-/* ---- Tab preset seperti Chrome (komponen "Tab preset") ------------ */
-
-.tabs {
-  display: flex;
-  align-items: flex-end;
-  gap: 2px;
-  min-width: 0;
-  /* Ruang 8 px di kiri-kanan untuk lengkung tab aktif. */
-  padding: 0 8px;
-  overflow-x: auto;
-  overflow-y: hidden;
-  scrollbar-width: none;
-}
-
-.tabs::-webkit-scrollbar {
-  display: none;
-}
-
-.tab {
-  position: relative;
-  display: flex;
-  align-items: center;
-  gap: 8px;
-  height: 30px;
-  min-width: 72px;
-  max-width: 180px;
-  padding: 0 16px 0 14px;
-  border-radius: 10px 10px 0 0;
-  font-size: 13px;
-  color: var(--text-muted);
-  flex: 0 1 auto;
-  white-space: nowrap;
-}
-
-.tab:not(.active):not(:disabled):hover {
-  background: var(--bg-chip);
-  color: var(--text);
-}
-
-.tab.active {
-  background: var(--bg-field);
-  color: var(--text);
-  font-weight: 500;
-  z-index: 1;
-}
-
-/* Lengkung cekung di kedua sisi bawah tab aktif, menyatu dengan area isi dock. */
-.tab.active::before,
-.tab.active::after {
-  content: "";
-  position: absolute;
-  bottom: 0;
-  width: 8px;
-  height: 8px;
-  pointer-events: none;
-}
-
-.tab.active::before {
-  left: -8px;
-  background: radial-gradient(circle at 0 0, transparent 7.5px, var(--bg-field) 8px);
-}
-
-.tab.active::after {
-  right: -8px;
-  background: radial-gradient(circle at 100% 0, transparent 7.5px, var(--bg-field) 8px);
-}
-
-.tab-name {
-  overflow: hidden;
-  text-overflow: ellipsis;
-}
-
-.tab-dot {
-  width: 8px;
-  height: 8px;
-  border-radius: 4px;
-  flex-shrink: 0;
-  background: var(--blue);
-}
-
-.tab-dot.brutal {
-  background: var(--brutal);
-}
-
-.tab-dot.dock_only {
-  background: var(--text-muted);
-}
-
-.tab-new {
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  width: 24px;
-  height: 24px;
-  margin: 0 0 3px 6px;
-  border-radius: 12px;
-  flex-shrink: 0;
-}
-
-.tab-new .icon {
-  opacity: 0.8;
-}
-
-.tab-new:not(:disabled):hover {
-  background: var(--bg-chip);
 }
 
 .panel-header button {
@@ -159,6 +40,13 @@ body {
 
 .panel-header .logo {
   opacity: 0.9;
+}
+
+.panel-title {
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--text-muted);
+  white-space: nowrap;
 }
 
 .icon.flipped {
@@ -195,7 +83,7 @@ body {
 /* ---- Area isi dock ------------------------------------------------ */
 
 .panel-body {
-  padding: 0;
+  padding: 10px 10px 0;
 }
 
 .field {
@@ -203,8 +91,10 @@ body {
   display: flex;
   align-items: flex-start;
   gap: 6px;
-  min-height: 96px;
-  padding: 16px 16px 6px;
+  min-height: 102px;
+  padding: 14px 14px 12px;
+  background: var(--bg-field);
+  border-radius: var(--radius-field);
 }
 
 .dock-apps {
@@ -471,7 +361,19 @@ body {
   display: flex;
   align-items: center;
   gap: 8px;
-  padding: 8px 12px 12px;
+  padding: 10px;
+}
+
+.chips {
+  display: flex;
+  gap: 8px;
+  min-width: 0;
+  overflow-x: auto;
+  scrollbar-width: none;
+}
+
+.chips::-webkit-scrollbar {
+  display: none;
 }
 
 .spinner {
