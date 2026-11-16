@@ -1,4 +1,4 @@
-//! Docky: panel mengambang di atas dock, ikon menu bar, dan jendela Pengaturan.
+//! Docky: panel mengambang di tengah layar, ikon menu bar, dan jendela Pengaturan.
 
 mod platform;
 mod updater;
@@ -30,16 +30,14 @@ const SETTINGS: &str = "settings";
 /// Popover Tambah app sebagai jendela kecil sendiri di atas tombol + panel.
 const PICKER: &str = "picker";
 const PANEL_WIDTH: f64 = 720.0;
-/// Jarak panel dari tepi atas dock, dalam poin.
-const PANEL_GAP: f64 = 10.0;
 
 type SysEngine = Engine<SystemApps, SystemDock>;
 
 struct AppState {
     engine: Arc<SysEngine>,
     icons: Mutex<HashMap<String, Option<String>>>,
-    /// Panel sudah diseret pengguna: jangan pindahkan lagi ke atas dock
-    /// sampai pengguna memilih "Kembalikan ke atas dock".
+    /// Panel sudah diseret pengguna: jangan pindahkan lagi ke tengah
+    /// sampai pengguna memilih "Kembalikan panel ke tengah".
     panel_moved: AtomicBool,
     /// Tinggi panel terakhir yang diminta (piksel fisik). Dipakai sebagai acuan
     /// tepi bawah, karena ukuran jendela dari sistem bisa belum diperbarui saat
@@ -224,9 +222,8 @@ fn app_status(app: AppHandle, state: tauri::State<'_, AppState>) -> Status {
     }
 }
 
-/// Atur tinggi panel sesuai isinya. Panel yang belum diseret diletakkan tepat
-/// di atas dock; panel yang sudah diseret tetap di tempatnya dengan tepi bawah
-/// yang sama, jadi tumbuh ke atas seperti panel di atas dock.
+/// Atur tinggi panel sesuai isinya. Panel yang belum diseret tetap di tengah
+/// layar; panel yang sudah diseret tetap di tempatnya dengan tepi bawah yang sama.
 #[tauri::command]
 fn resize_panel(app: AppHandle, state: tauri::State<'_, AppState>, height: f64) -> CmdResult<()> {
     let Some(win) = app.get_webview_window(PANEL) else { return Ok(()) };
@@ -247,7 +244,7 @@ fn resize_panel(app: AppHandle, state: tauri::State<'_, AppState>, height: f64) 
     } else {
         win.set_size(LogicalSize::new(PANEL_WIDTH, height))?;
         let width = (PANEL_WIDTH * scale).round() as i32;
-        position_panel_sized(&win, width, new_h)?;
+        position_panel_sized(&win, width, new_h, false)?;
     }
     *last = Some(new_h);
     Ok(())
@@ -261,7 +258,7 @@ fn start_panel_drag(window: WebviewWindow, state: tauri::State<'_, AppState>) ->
     Ok(())
 }
 
-/// Kembalikan panel ke tempat asalnya, tepat di atas dock.
+/// Kembalikan panel ke tempat asalnya, di tengah layar.
 #[tauri::command]
 fn reset_panel_position(app: AppHandle, state: tauri::State<'_, AppState>) -> CmdResult<()> {
     state.panel_moved.store(false, Ordering::SeqCst);
@@ -401,27 +398,36 @@ fn install_update(app: AppHandle, state: tauri::State<'_, AppState>) -> CmdResul
 // ---- Jendela ----------------------------------------------------------
 
 
-/// Letakkan panel di tengah bawah layar, tepat di atas dock. Area kerja
+/// Letakkan panel di tengah layar tempat kursor berada. Area kerja
 /// (`work_area`) sudah tidak termasuk dock dan menu bar.
 fn position_panel(win: &WebviewWindow) -> tauri::Result<()> {
     let size = win.outer_size()?;
-    position_panel_sized(win, size.width as i32, size.height as i32)
+    position_panel_sized(win, size.width as i32, size.height as i32, true)
 }
 
 /// Sama dengan `position_panel`, dengan ukuran jendela yang diketahui
 /// (ukuran dari sistem bisa tertinggal sesaat setelah `set_size`).
-fn position_panel_sized(win: &WebviewWindow, width: i32, height: i32) -> tauri::Result<()> {
-    let monitor = match win.current_monitor()? {
+/// `follow_cursor`: pakai layar tempat kursor (saat panel dibuka); kalau tidak,
+/// layar tempat panel sekarang (saat tinggi berubah, supaya tidak pindah layar).
+fn position_panel_sized(win: &WebviewWindow, width: i32, height: i32, follow_cursor: bool) -> tauri::Result<()> {
+    let under_cursor = if follow_cursor {
+        win.cursor_position().ok().and_then(|p| win.monitor_from_point(p.x, p.y).ok().flatten())
+    } else {
+        None
+    };
+    let monitor = match under_cursor {
         Some(m) => m,
-        None => match win.primary_monitor()? {
+        None => match win.current_monitor()? {
             Some(m) => m,
-            None => return Ok(()),
+            None => match win.primary_monitor()? {
+                Some(m) => m,
+                None => return Ok(()),
+            },
         },
     };
     let area = monitor.work_area();
-    let gap = (PANEL_GAP * monitor.scale_factor()).round() as i32;
     let x = area.position.x + (area.size.width as i32 - width) / 2;
-    let y = area.position.y + area.size.height as i32 - height - gap;
+    let y = area.position.y + (area.size.height as i32 - height) / 2;
     win.set_position(PhysicalPosition::new(x, y))
 }
 

@@ -41,7 +41,7 @@ type View =
 
 type HtmlMenu = { anchor: HTMLElement; entries: MenuEntry[] } | null;
 
-/** Panel di atas dock (Figma "Panel Docky · K1"). */
+/** Panel di tengah layar (Figma "Panel Docky · K1"). */
 export function Panel() {
   const { presets, setPresets, warning, clearWarning, loaded } = usePresets();
   const { settings, save: saveSettings } = useSettings();
@@ -92,7 +92,7 @@ export function Panel() {
     };
   }, [refreshStatus, rescan]);
 
-  // Tinggi jendela mengikuti isi, lalu Rust meletakkannya tepat di atas dock.
+  // Tinggi jendela mengikuti isi, lalu Rust meletakkannya di tengah layar.
   // Isi menempel ke bawah jendela, jadi saat popover menambah tinggi, panel tidak bergeser.
   useLayoutEffect(() => {
     const el = rootRef.current;
@@ -302,7 +302,7 @@ export function Panel() {
       { text: "Dock asli…", enabled: !busy && !!status?.has_backup, action: confirmOriginal },
       "separator",
       { text: collapsed ? "Bentangkan panel" : "Ciutkan panel", action: () => setCollapsed((c) => !c) },
-      { text: "Kembalikan panel ke atas dock", action: () => api.resetPanelPosition() },
+      { text: "Kembalikan panel ke tengah", action: () => api.resetPanelPosition() },
       "separator",
       update.state === "ready"
         ? { text: `Restart untuk update ke ${update.version}`, enabled: !busy, action: installUpdate }
@@ -375,7 +375,7 @@ export function Panel() {
       <div className={`panel${collapsed ? " collapsed" : ""}`} ref={panelRef}>
         <header
           className="strip"
-          title="Seret untuk memindahkan panel. Klik dua kali untuk kembali ke atas dock."
+          title="Seret untuk memindahkan panel. Klik dua kali untuk kembali ke tengah."
           onMouseDown={onStripMouseDown}
           onDoubleClick={(e) => {
             if (!(e.target as HTMLElement).closest("button")) api.resetPanelPosition().catch(() => {});
@@ -397,8 +397,8 @@ export function Panel() {
             <button
               className="light green"
               onClick={() => api.resetPanelPosition()}
-              aria-label="Kembalikan panel ke atas dock"
-              title="Kembalikan ke atas dock"
+              aria-label="Kembalikan panel ke tengah"
+              title="Kembalikan ke tengah"
             >
               <Glyph d="M5 2v6M2 5h6" />
             </button>
